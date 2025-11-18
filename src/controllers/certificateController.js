@@ -330,6 +330,133 @@ exports.verifyCertificate = async (req, res) => {
   }
 };
 
+// @desc    Download certificate PDF
+// @route   GET /api/certificates/:id/download
+// @access  Public/Private
+exports.downloadCertificate = async (req, res) => {
+  try {
+    const certificate = await Certificate.findById(req.params.id);
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificate not found',
+      });
+    }
+
+    // Check if PDF is generated
+    if (!certificate.pdfFile) {
+      return res.status(400).json({
+        success: false,
+        message: 'Certificate PDF not generated yet',
+      });
+    }
+
+    // Build file path
+    const filePath = path.join(process.cwd(), 'public', certificate.pdfFile);
+    
+    // Check if file exists
+    const fs = require('fs');
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificate file not found',
+      });
+    }
+
+    // Update download count
+    certificate.downloadCount += 1;
+    certificate.lastDownloadedAt = new Date();
+    await certificate.save();
+
+    // Send file
+    res.download(filePath, `${certificate.certificateNumber}.pdf`, (err) => {
+      if (err) {
+        console.error('Download error:', err);
+        res.status(500).json({
+          success: false,
+          message: 'Error downloading file',
+        });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Batch generate certificates
+// @route   POST /api/certificates/batch-generate
+// @access  Private/Admin
+exports.batchGenerate = async (req, res) => {
+  try {
+    const { certificateIds } = req.body;
+
+    if (!certificateIds || !Array.isArray(certificateIds)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide an array of certificate IDs',
+      });
+    }
+
+    const results = {
+      success: [],
+      failed: [],
+      total: certificateIds.length,
+    };
+
+    for (const certId of certificateIds) {
+      try {
+        const certificate = await Certificate.findById(certId);
+        if (!certificate) {
+          results.failed.push({ id: certId, reason: 'Certificate not found' });
+          continue;
+        }
+
+        const template = await Template.findById(certificate.template);
+        if (!template) {
+          results.failed.push({ id: certId, reason: 'Template not found' });
+          continue;
+        }
+
+        // Generate QR code if enabled
+        if (template.qrCode.enabled) {
+          const verificationURL = generateVerificationURL(
+            certificate.verificationCode,
+            (await certificate.populate('university')).university.subdomain
+          );
+          
+          const qrPath = await generateQRCode(verificationURL, certificate._id.toString());
+          certificate.qrCode = qrPath;
+        }
+
+        // Generate PDF
+        const pdfPath = await generatePDF(certificate, template);
+        certificate.pdfFile = pdfPath;
+        certificate.status = 'generated';
+
+        await certificate.save();
+        results.success.push(certId);
+      } catch (error) {
+        results.failed.push({ id: certId, reason: error.message });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Generated ${results.success.length} out of ${results.total} certificates`,
+      data: results,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // Helper function to generate unique certificate number
 async function generateCertificateNumber(universityId) {
   const year = new Date().getFullYear();

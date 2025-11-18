@@ -1,6 +1,13 @@
 const Template = require('../models/Template');
 const path = require('path');
 const fs = require('fs').promises;
+const {
+  extractTemplateVariables,
+  validateTemplateHTML,
+  generateFieldMapping,
+  validateFieldMapping,
+  fabricToPDFConfig,
+} = require('../utils/templateBuilder');
 
 // @desc    Create new template
 // @route   POST /api/templates
@@ -229,3 +236,238 @@ exports.uploadBackground = async (req, res) => {
     });
   }
 };
+
+// @desc    Validate HTML template
+// @route   POST /api/templates/validate-html
+// @access  Private/Admin
+exports.validateHTML = async (req, res) => {
+  try {
+    const { htmlContent } = req.body;
+
+    if (!htmlContent) {
+      return res.status(400).json({
+        success: false,
+        message: 'HTML content is required',
+      });
+    }
+
+    const validation = validateTemplateHTML(htmlContent);
+    const variables = extractTemplateVariables(htmlContent);
+
+    res.json({
+      success: true,
+      data: {
+        ...validation,
+        variables,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Preview template with sample data
+// @route   POST /api/templates/:id/preview
+// @access  Private
+exports.previewTemplate = async (req, res) => {
+  try {
+    const template = await Template.findById(req.params.id);
+
+    if (!template) {
+      return res.status(404).json({
+        success: false,
+        message: 'Template not found',
+      });
+    }
+
+    const { sampleData } = req.body;
+
+    // For HTML templates
+    if (template.type === 'certificate' && template.backgroundImage) {
+      // Generate preview HTML
+      const previewHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { margin: 0; padding: 20px; }
+            .preview-container {
+              width: ${template.dimensions.width}px;
+              height: ${template.dimensions.height}px;
+              position: relative;
+              background: url('${template.backgroundImage}') no-repeat center center;
+              background-size: cover;
+              border: 1px solid #ccc;
+            }
+            .field {
+              position: absolute;
+              white-space: pre-wrap;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="preview-container">
+            ${template.fields.map(field => {
+              const value = sampleData[field.name] || field.defaultValue || `[${field.name}]`;
+              return `
+                <div class="field" style="
+                  left: ${field.position.x}px;
+                  top: ${field.position.y}px;
+                  font-size: ${field.style?.fontSize || 12}px;
+                  font-weight: ${field.style?.fontWeight || 'normal'};
+                  color: ${field.style?.color || '#000000'};
+                  text-align: ${field.style?.align || 'left'};
+                ">${value}</div>
+              `;
+            }).join('')}
+          </div>
+        </body>
+        </html>
+      `;
+
+      res.json({
+        success: true,
+        data: {
+          html: previewHTML,
+          type: 'html',
+        },
+      });
+    } else {
+      // For other template types, return field data
+      res.json({
+        success: true,
+        data: {
+          template,
+          sampleData,
+          type: 'fields',
+        },
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Convert Fabric.js config to template
+// @route   POST /api/templates/fabric-to-template
+// @access  Private/Admin
+exports.fabricToTemplate = async (req, res) => {
+  try {
+    const { fabricConfig, templateId } = req.body;
+
+    if (!fabricConfig) {
+      return res.status(400).json({
+        success: false,
+        message: 'Fabric.js configuration is required',
+      });
+    }
+
+    const pdfConfig = fabricToPDFConfig(fabricConfig);
+
+    if (templateId) {
+      // Update existing template
+      const template = await Template.findByIdAndUpdate(
+        templateId,
+        {
+          fields: pdfConfig.fields,
+          version: { $inc: 1 },
+        },
+        { new: true }
+      );
+
+      res.json({
+        success: true,
+        data: template,
+      });
+    } else {
+      // Return converted config for preview
+      res.json({
+        success: true,
+        data: pdfConfig,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Generate field mapping template
+// @route   POST /api/templates/generate-mapping
+// @access  Private/Admin
+exports.generateMapping = async (req, res) => {
+  try {
+    const { fields } = req.body;
+
+    if (!Array.isArray(fields)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Fields array is required',
+      });
+    }
+
+    const mapping = generateFieldMapping(fields);
+    const validation = validateFieldMapping(mapping);
+
+    res.json({
+      success: true,
+      data: {
+        mapping,
+        validation,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Clone template
+// @route   POST /api/templates/:id/clone
+// @access  Private/Admin
+exports.cloneTemplate = async (req, res) => {
+  try {
+    const template = await Template.findById(req.params.id);
+
+    if (!template) {
+      return res.status(404).json({
+        success: false,
+        message: 'Template not found',
+      });
+    }
+
+    // Create clone
+    const clonedData = template.toObject();
+    delete clonedData._id;
+    delete clonedData.createdAt;
+    delete clonedData.updatedAt;
+    
+    clonedData.name = `${clonedData.name} (Copy)`;
+    clonedData.createdBy = req.user._id;
+    clonedData.version = 1;
+
+    const clonedTemplate = await Template.create(clonedData);
+
+    res.status(201).json({
+      success: true,
+      data: clonedTemplate,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
