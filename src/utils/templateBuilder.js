@@ -55,7 +55,7 @@ exports.validateTemplateHTML = (htmlContent) => {
   }
   
   // Check for script tags (security)
-  if (/<script/i.test(htmlContent)) {
+  if (/<script\b[^>]*>/i.test(htmlContent)) {
     errors.push('Script tags are not allowed in templates');
   }
   
