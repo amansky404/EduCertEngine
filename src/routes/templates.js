@@ -9,6 +9,7 @@ const {
   uploadBackground,
 } = require('../controllers/templateController');
 const { protect, authorize } = require('../middleware/auth');
+const { uploadLimiter } = require('../middleware/rateLimiter');
 
 router
   .route('/')
@@ -21,6 +22,6 @@ router
   .put(protect, authorize('admin', 'superadmin'), updateTemplate)
   .delete(protect, authorize('admin', 'superadmin'), deleteTemplate);
 
-router.post('/:id/upload-background', protect, authorize('admin', 'superadmin'), uploadBackground);
+router.post('/:id/upload-background', protect, authorize('admin', 'superadmin'), uploadLimiter, uploadBackground);
 
 module.exports = router;

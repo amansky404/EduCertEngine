@@ -7,6 +7,7 @@ const fileUpload = require('express-fileupload');
 const path = require('path');
 const connectDB = require('./src/config/database');
 const { subdomainMiddleware } = require('./src/middleware/subdomain');
+const { apiLimiter } = require('./src/middleware/rateLimiter');
 
 // Initialize app
 const app = express();
@@ -31,6 +32,9 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // Subdomain middleware
 app.use(subdomainMiddleware);
+
+// Apply general rate limiting to all API routes
+app.use('/api/', apiLimiter);
 
 // Routes
 app.use('/api/auth', require('./src/routes/auth'));

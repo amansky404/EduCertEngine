@@ -10,20 +10,21 @@ const {
   verifyCertificate,
 } = require('../controllers/certificateController');
 const { protect, authorize } = require('../middleware/auth');
+const { uploadLimiter, generateLimiter, verificationLimiter } = require('../middleware/rateLimiter');
 
 router
   .route('/')
   .get(protect, getCertificates)
   .post(protect, authorize('admin', 'staff', 'superadmin'), createCertificate);
 
-router.post('/bulk-import', protect, authorize('admin', 'superadmin'), bulkImport);
-router.get('/search', searchCertificates);
-router.get('/verify/:code', verifyCertificate);
+router.post('/bulk-import', protect, authorize('admin', 'superadmin'), uploadLimiter, bulkImport);
+router.get('/search', verificationLimiter, searchCertificates);
+router.get('/verify/:code', verificationLimiter, verifyCertificate);
 
 router
   .route('/:id')
   .get(protect, getCertificate);
 
-router.post('/:id/generate', protect, authorize('admin', 'staff', 'superadmin'), generateCertificatePDF);
+router.post('/:id/generate', protect, authorize('admin', 'staff', 'superadmin'), generateLimiter, generateCertificatePDF);
 
 module.exports = router;
