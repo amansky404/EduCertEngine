@@ -392,7 +392,7 @@ exports.downloadCertificate = async (req, res) => {
 // @access  Private/Admin
 exports.batchGenerate = async (req, res) => {
   try {
-    const { certificateIds, batchId } = req.body;
+    const { certificateIds } = req.body;
 
     if (!certificateIds || !Array.isArray(certificateIds)) {
       return res.status(400).json({
