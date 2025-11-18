@@ -70,7 +70,7 @@ exports.sendBulkCertificateEmails = async (recipients) => {
 
   for (const recipient of recipients) {
     try {
-      const result = await exports.sendCertificateEmail(recipient);
+      await exports.sendCertificateEmail(recipient);
       results.success.push({
         email: recipient.to,
         certificateNumber: recipient.certificateNumber,
