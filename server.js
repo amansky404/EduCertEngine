@@ -43,6 +43,7 @@ app.use('/api/templates', require('./src/routes/templates'));
 app.use('/api/certificates', require('./src/routes/certificates'));
 app.use('/api/upload', require('./src/routes/upload'));
 app.use('/api/analytics', require('./src/routes/analytics'));
+app.use('/api/search', require('./src/routes/search'));
 
 // Health check
 app.get('/api/health', (req, res) => {
