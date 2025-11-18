@@ -1,0 +1,343 @@
+{
+  "info": {
+    "name": "EduCertEngine API",
+    "description": "Complete API collection for EduCertEngine",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"staff\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('token', jsonData.data.token);",
+                  "    pm.collectionVariables.set('token', jsonData.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@techuni.edu\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Universities",
+      "item": [
+        {
+          "name": "Get All Universities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/universities",
+              "host": ["{{base_url}}"],
+              "path": ["api", "universities"]
+            }
+          }
+        },
+        {
+          "name": "Create University",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New University\",\n  \"subdomain\": \"new-uni\",\n  \"branding\": {\n    \"primaryColor\": \"#1a73e8\",\n    \"secondaryColor\": \"#34a853\"\n  },\n  \"settings\": {\n    \"enableQRCode\": true,\n    \"allowBulkImport\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/universities",
+              "host": ["{{base_url}}"],
+              "path": ["api", "universities"]
+            }
+          }
+        },
+        {
+          "name": "Get University by Subdomain",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/universities/subdomain/tech-uni",
+              "host": ["{{base_url}}"],
+              "path": ["api", "universities", "subdomain", "tech-uni"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Templates",
+      "item": [
+        {
+          "name": "Get All Templates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/templates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "templates"]
+            }
+          }
+        },
+        {
+          "name": "Create Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Certificate\",\n  \"type\": \"certificate\",\n  \"fields\": [\n    {\n      \"name\": \"studentName\",\n      \"label\": \"Student Name\",\n      \"type\": \"text\",\n      \"position\": {\"x\": 100, \"y\": 200},\n      \"style\": {\"fontSize\": 24},\n      \"required\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/templates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "templates"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Certificates",
+      "item": [
+        {
+          "name": "Get All Certificates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/certificates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "certificates"]
+            }
+          }
+        },
+        {
+          "name": "Create Certificate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": \"TEMPLATE_ID_HERE\",\n  \"studentInfo\": {\n    \"name\": \"John Doe\",\n    \"rollNumber\": \"2024001\",\n    \"email\": \"john@example.com\"\n  },\n  \"courseInfo\": {\n    \"courseName\": \"Computer Science\",\n    \"completionDate\": \"2024-05-15\",\n    \"grade\": \"A\"\n  },\n  \"fieldData\": {\n    \"studentName\": \"John Doe\",\n    \"courseName\": \"Computer Science\",\n    \"grade\": \"A\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/certificates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "certificates"]
+            }
+          }
+        },
+        {
+          "name": "Generate Certificate PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/certificates/CERT_ID/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "certificates", "CERT_ID", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Import CSV",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "templateId",
+                  "value": "TEMPLATE_ID_HERE",
+                  "type": "text"
+                },
+                {
+                  "key": "csvFile",
+                  "type": "file",
+                  "src": "sample-certificates.csv"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/certificates/bulk-import",
+              "host": ["{{base_url}}"],
+              "path": ["api", "certificates", "bulk-import"]
+            }
+          }
+        },
+        {
+          "name": "Search Certificates",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/certificates/search?query=John&universityId=UNI_ID",
+              "host": ["{{base_url}}"],
+              "path": ["api", "certificates", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "John"
+                },
+                {
+                  "key": "universityId",
+                  "value": "UNI_ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify Certificate",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/certificates/verify/VERIFICATION_CODE",
+              "host": ["{{base_url}}"],
+              "path": ["api", "certificates", "verify", "VERIFICATION_CODE"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "health"]
+        }
+      }
+    }
+  ]
+}
