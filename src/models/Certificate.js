@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const certificateSchema = new mongoose.Schema({
   university: {
@@ -115,7 +116,8 @@ function generateVerificationCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let code = '';
   for (let i = 0; i < 12; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+    const randomIndex = crypto.randomInt(0, chars.length);
+    code += chars.charAt(randomIndex);
   }
   return code;
 }
