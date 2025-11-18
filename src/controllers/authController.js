@@ -15,6 +15,32 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, role, universityId } = req.body;
 
+    // Prevent privilege escalation through self-provisioned roles or tenant IDs
+    if (role && role !== 'staff') {
+      return res.status(403).json({
+        success: false,
+        message: 'Self-registration is limited to staff accounts',
+      });
+    }
+
+    if (
+      universityId &&
+      req.university &&
+      universityId.toString() !== req.university._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot register to a different university',
+      });
+    }
+
+    if (!req.university) {
+      return res.status(400).json({
+        success: false,
+        message: 'Registration must occur via a valid university subdomain',
+      });
+    }
+
     // Check if user exists
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -29,8 +55,8 @@ exports.register = async (req, res) => {
       name,
       email,
       password,
-      role: role || 'staff',
-      university: universityId,
+      role: 'staff',
+      university: req.university._id,
     });
 
     const token = generateToken(user._id);
