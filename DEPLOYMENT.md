@@ -1,458 +1,564 @@
-# EduCertSuite - Deployment Guide
+# Deployment Guide
+
+This guide covers various deployment options for EduCertEngine.
 
 ## Prerequisites
 
-- Node.js 18+ (LTS recommended)
-- PostgreSQL 14+ or MongoDB
-- Domain with wildcard subdomain support
-- SSL certificate (Let's Encrypt recommended)
-- Minimum 2GB RAM, 20GB storage
+- Node.js v14 or higher
+- MongoDB v4.4 or higher
+- npm or yarn
+- A domain name (for production)
+- SSL/TLS certificate (for production)
 
-## Local Development Setup
+## Environment Configuration
 
-### 1. Clone and Install
+Create a `.env` file based on `.env.example`:
 
 ```bash
-git clone https://github.com/amansky404/EduCertEngine.git
-cd EduCertEngine
-npm install
+cp .env.example .env
 ```
 
-### 2. Environment Configuration
-
-Create `.env` file:
+### Production Environment Variables
 
 ```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/educertsuite"
+NODE_ENV=production
+PORT=5000
 
-# Application
-NEXT_PUBLIC_BASE_DOMAIN="localhost:3000"
-NODE_ENV="development"
+# Database - Use MongoDB Atlas or your own instance
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/educertengine?retryWrites=true&w=majority
 
-# Security
-JWT_SECRET="your-super-secret-jwt-key-min-32-characters"
+# JWT Configuration
+JWT_SECRET=your_very_secure_random_string_here
+JWT_EXPIRE=30d
 
-# Storage
-STORAGE_DRIVER="local"
-NEXT_PUBLIC_UPLOAD_DIR="/uploads"
+# Domain Configuration
+BASE_DOMAIN=educert.com
+FRONTEND_URL=https://educert.com
 
-# Optional: Email (for notifications)
-SMTP_HOST="smtp.gmail.com"
-SMTP_PORT="587"
-SMTP_USER="your-email@gmail.com"
-SMTP_PASS="your-app-password"
+# File Upload Configuration
+MAX_FILE_SIZE=10485760
+UPLOAD_PATH=./public/uploads
+
+# Certificate Storage
+CERT_PATH=./public/certificates
+TEMPLATE_PATH=./public/templates
 ```
 
-### 3. Database Setup
+## Deployment Options
 
-```bash
-# Generate Prisma Client
-npx prisma generate
+### Option 1: Heroku
 
-# Create and run migrations
-npx prisma migrate dev --name init
+1. **Install Heroku CLI**
+   ```bash
+   npm install -g heroku
+   ```
 
-# Optional: Open Prisma Studio
-npx prisma studio
-```
+2. **Login to Heroku**
+   ```bash
+   heroku login
+   ```
 
-### 4. Start Development Server
+3. **Create Heroku App**
+   ```bash
+   heroku create your-app-name
+   ```
 
-```bash
-npm run dev
-```
+4. **Add MongoDB Add-on**
+   ```bash
+   heroku addons:create mongodb:sandbox
+   ```
 
-Visit `http://localhost:3000`
+5. **Set Environment Variables**
+   ```bash
+   heroku config:set NODE_ENV=production
+   heroku config:set JWT_SECRET=your_secret_here
+   heroku config:set BASE_DOMAIN=your-app-name.herokuapp.com
+   ```
 
-## Production Deployment
+6. **Deploy**
+   ```bash
+   git push heroku main
+   ```
 
-### Option 1: Vercel (Recommended)
+7. **Open App**
+   ```bash
+   heroku open
+   ```
 
-#### Setup
+### Option 2: DigitalOcean
+
+1. **Create a Droplet**
+   - Choose Ubuntu 20.04 LTS
+   - Select appropriate size (minimum 2GB RAM recommended)
+   - Add SSH key
+
+2. **Connect to Server**
+   ```bash
+   ssh root@your_server_ip
+   ```
+
+3. **Install Node.js**
+   ```bash
+   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+   ```
+
+4. **Install MongoDB**
+   ```bash
+   wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -
+   echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+   sudo apt-get update
+   sudo apt-get install -y mongodb-org
+   sudo systemctl start mongod
+   sudo systemctl enable mongod
+   ```
+
+5. **Install PM2**
+   ```bash
+   sudo npm install -g pm2
+   ```
+
+6. **Clone Repository**
+   ```bash
+   cd /var/www
+   git clone https://github.com/amansky404/EduCertEngine.git
+   cd EduCertEngine
+   ```
+
+7. **Install Dependencies**
+   ```bash
+   npm install --production
+   ```
+
+8. **Create .env File**
+   ```bash
+   nano .env
+   # Add your environment variables
+   ```
+
+9. **Start Application with PM2**
+   ```bash
+   pm2 start server.js --name educertengine
+   pm2 save
+   pm2 startup
+   ```
+
+10. **Setup Nginx as Reverse Proxy**
+    ```bash
+    sudo apt-get install nginx
+    sudo nano /etc/nginx/sites-available/educertengine
+    ```
+
+    Add the following configuration:
+    ```nginx
+    server {
+        listen 80;
+        server_name educert.com *.educert.com;
+
+        location / {
+            proxy_pass http://localhost:5000;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+        }
+    }
+    ```
+
+    Enable the site:
+    ```bash
+    sudo ln -s /etc/nginx/sites-available/educertengine /etc/nginx/sites-enabled/
+    sudo nginx -t
+    sudo systemctl restart nginx
+    ```
+
+11. **Setup SSL with Let's Encrypt**
+    ```bash
+    sudo apt-get install certbot python3-certbot-nginx
+    sudo certbot --nginx -d educert.com -d *.educert.com
+    ```
+
+### Option 3: AWS EC2
+
+1. **Launch EC2 Instance**
+   - Choose Amazon Linux 2 or Ubuntu
+   - t2.medium or larger recommended
+   - Configure security group (ports 22, 80, 443)
+
+2. **Connect to Instance**
+   ```bash
+   ssh -i your-key.pem ec2-user@your-instance-ip
+   ```
+
+3. **Follow Similar Steps as DigitalOcean**
+   - Install Node.js, MongoDB, PM2
+   - Clone repository and configure
+   - Setup Nginx and SSL
+
+4. **Configure AWS S3 for File Storage (Optional)**
+   - Create S3 bucket for certificates and uploads
+   - Update code to use AWS SDK for file operations
+   - Set appropriate IAM roles and permissions
+
+### Option 4: Docker
+
+1. **Create Dockerfile**
+   ```dockerfile
+   FROM node:18-alpine
+
+   WORKDIR /app
+
+   COPY package*.json ./
+   RUN npm install --production
+
+   COPY . .
+
+   EXPOSE 5000
+
+   CMD ["npm", "start"]
+   ```
+
+2. **Create docker-compose.yml**
+   ```yaml
+   version: '3.8'
+
+   services:
+     app:
+       build: .
+       ports:
+         - "5000:5000"
+       environment:
+         - NODE_ENV=production
+         - MONGODB_URI=mongodb://mongo:27017/educertengine
+       depends_on:
+         - mongo
+       volumes:
+         - ./public:/app/public
+
+     mongo:
+       image: mongo:6.0
+       ports:
+         - "27017:27017"
+       volumes:
+         - mongo-data:/data/db
+
+   volumes:
+     mongo-data:
+   ```
+
+3. **Build and Run**
+   ```bash
+   docker-compose up -d
+   ```
+
+### Option 5: Vercel (API Only)
 
 1. **Install Vercel CLI**
-```bash
-npm install -g vercel
+   ```bash
+   npm install -g vercel
+   ```
+
+2. **Create vercel.json**
+   ```json
+   {
+     "version": 2,
+     "builds": [
+       {
+         "src": "server.js",
+         "use": "@vercel/node"
+       }
+     ],
+     "routes": [
+       {
+         "src": "/(.*)",
+         "dest": "server.js"
+       }
+     ]
+   }
+   ```
+
+3. **Deploy**
+   ```bash
+   vercel
+   ```
+
+Note: Vercel is serverless, so you'll need to use MongoDB Atlas for the database.
+
+## DNS Configuration
+
+### Wildcard Subdomain Setup
+
+For multi-tenancy to work, you need to configure wildcard subdomains:
+
+**DNS A Records:**
+```
+@           A    your_server_ip
+*           A    your_server_ip
 ```
 
-2. **Configure Project**
-```bash
-vercel init
-```
+This allows:
+- `educert.com` (main site)
+- `tech-uni.educert.com` (university subdomain)
+- `medical-college.educert.com` (another university)
 
-3. **Set Environment Variables**
-```bash
-vercel env add DATABASE_URL
-vercel env add JWT_SECRET
-vercel env add NEXT_PUBLIC_BASE_DOMAIN
-```
+## Database Setup
 
-4. **Configure Wildcard Domains**
+### MongoDB Atlas (Recommended for Production)
 
-In Vercel Dashboard:
-- Go to Project Settings > Domains
-- Add: `*.yourdomain.com`
-- Configure DNS with wildcard A record
+1. **Create Account** at https://www.mongodb.com/cloud/atlas
 
-5. **Deploy**
-```bash
-vercel --prod
-```
+2. **Create Cluster**
+   - Choose your cloud provider and region
+   - Select cluster tier (M10+ for production)
 
-#### DNS Configuration
+3. **Configure Network Access**
+   - Add your server's IP address
+   - Or allow access from anywhere (0.0.0.0/0) with strong authentication
 
-Add these records to your domain:
+4. **Create Database User**
+   - Username and strong password
+   - Grant read/write access
 
-```
-Type    Name    Value
-A       @       76.76.21.21
-A       *       76.76.21.21
-CNAME   www     cname.vercel-dns.com
-```
+5. **Get Connection String**
+   ```
+   mongodb+srv://username:password@cluster.mongodb.net/educertengine
+   ```
 
-### Option 2: AWS EC2 + Nginx
+6. **Update .env**
+   ```env
+   MONGODB_URI=your_connection_string_here
+   ```
 
-#### 1. Server Setup
+## File Storage
 
-```bash
-# Update system
-sudo apt update && sudo apt upgrade -y
+### Local Storage (Development)
+Files are stored in `./public` directory.
 
-# Install Node.js
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
+### AWS S3 (Production Recommended)
 
-# Install PostgreSQL
-sudo apt install -y postgresql postgresql-contrib
+1. **Create S3 Bucket**
+   ```bash
+   aws s3 mb s3://educert-files
+   ```
 
-# Install Nginx
-sudo apt install -y nginx
+2. **Configure Bucket Policy**
+   - Allow public read for certificate files
+   - Private for uploads
 
-# Install PM2
-sudo npm install -g pm2
-```
+3. **Install AWS SDK**
+   ```bash
+   npm install aws-sdk
+   ```
 
-#### 2. Application Setup
+4. **Update Environment Variables**
+   ```env
+   AWS_ACCESS_KEY_ID=your_access_key
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   AWS_REGION=us-east-1
+   AWS_BUCKET_NAME=educert-files
+   ```
 
-```bash
-# Clone repository
-cd /var/www
-git clone https://github.com/amansky404/EduCertEngine.git
-cd EduCertEngine
+## SSL/TLS Configuration
 
-# Install dependencies
-npm install
-
-# Build application
-npm run build
-
-# Start with PM2
-pm2 start npm --name "educertsuite" -- start
-pm2 save
-pm2 startup
-```
-
-#### 3. Nginx Configuration
-
-Create `/etc/nginx/sites-available/educertsuite`:
-
-```nginx
-# Redirect HTTP to HTTPS
-server {
-    listen 80;
-    server_name yourdomain.com *.yourdomain.com;
-    return 301 https://$host$request_uri;
-}
-
-# Main application
-server {
-    listen 443 ssl http2;
-    server_name yourdomain.com *.yourdomain.com;
-
-    # SSL Configuration
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-
-    # Proxy to Next.js
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    # Static files caching
-    location /_next/static {
-        proxy_pass http://localhost:3000;
-        proxy_cache_valid 60m;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Upload files
-    location /uploads {
-        alias /var/www/EduCertEngine/public/uploads;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "no-referrer-when-downgrade" always;
-}
-```
-
-Enable site:
-```bash
-sudo ln -s /etc/nginx/sites-available/educertsuite /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
-#### 4. SSL Certificate (Let's Encrypt)
+### Using Let's Encrypt (Free)
 
 ```bash
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com -d *.yourdomain.com
+sudo certbot --nginx -d educert.com -d *.educert.com
 ```
 
-### Option 3: Docker Deployment
+### Using Custom Certificate
 
-#### 1. Create Dockerfile
+1. Place certificate files in `/etc/ssl/certs/`
+2. Update Nginx configuration:
+   ```nginx
+   ssl_certificate /etc/ssl/certs/educert.com.crt;
+   ssl_certificate_key /etc/ssl/private/educert.com.key;
+   ```
 
-```dockerfile
-FROM node:18-alpine AS base
+## Monitoring and Logging
 
-# Dependencies
-FROM base AS deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-
-# Builder
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npx prisma generate
-RUN npm run build
-
-# Runner
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-
-EXPOSE 3000
-
-ENV PORT 3000
-
-CMD ["node", "server.js"]
-```
-
-#### 2. Docker Compose
-
-```yaml
-version: '3.8'
-
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - NEXT_PUBLIC_BASE_DOMAIN=${NEXT_PUBLIC_BASE_DOMAIN}
-    depends_on:
-      - db
-
-  db:
-    image: postgres:14-alpine
-    environment:
-      - POSTGRES_USER=educert
-      - POSTGRES_PASSWORD=securepassword
-      - POSTGRES_DB=educertsuite
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
-volumes:
-  postgres_data:
-```
-
-#### 3. Deploy
+### PM2 Monitoring
 
 ```bash
-docker-compose up -d
+# View logs
+pm2 logs educertengine
+
+# Monitor resources
+pm2 monit
+
+# View status
+pm2 status
 ```
 
-## Post-Deployment Steps
-
-### 1. Create Super Admin
-
-Visit: `https://yourdomain.com/superadmin/register`
-
-Create your first super admin account.
-
-### 2. Create First University
-
-1. Login to super admin panel
-2. Navigate to dashboard
-3. Click "Create New University"
-4. Fill in university details
-5. Assign subdomain (e.g., `harvard`)
-6. Create admin account
-
-### 3. Configure University
-
-1. Login to university admin panel at `https://subdomain.yourdomain.com/admin/login`
-2. Configure branding (Settings > Branding)
-3. Set up SEO (SEO Panel)
-4. Customize landing page (Landing Builder)
-
-### 4. Create Templates
-
-1. Navigate to Templates
-2. Choose template type
-3. Configure template settings
-4. Save template
-
-### 5. Import Students
-
-1. Go to CSV Creator
-2. Define fields
-3. Download CSV template
-4. Fill student data
-5. Import CSV in Students section
-
-## Monitoring & Maintenance
-
-### Log Monitoring
+### Setup Log Rotation
 
 ```bash
-# PM2 logs
-pm2 logs educertsuite
-
-# Nginx logs
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
+pm2 install pm2-logrotate
+pm2 set pm2-logrotate:max_size 10M
+pm2 set pm2-logrotate:retain 30
 ```
+
+### Application Monitoring (Optional)
+
+Consider using:
+- **New Relic**: Application performance monitoring
+- **Sentry**: Error tracking
+- **DataDog**: Infrastructure monitoring
+
+## Backup Strategy
 
 ### Database Backup
 
+**Automated Daily Backup Script:**
 ```bash
-# PostgreSQL backup
-pg_dump educertsuite > backup_$(date +%Y%m%d).sql
-
-# Automated daily backups
-0 2 * * * pg_dump educertsuite > /backups/educertsuite_$(date +\%Y\%m\%d).sql
+#!/bin/bash
+DATE=$(date +%Y-%m-%d)
+BACKUP_DIR="/var/backups/mongodb"
+mkdir -p $BACKUP_DIR
+mongodump --uri="$MONGODB_URI" --out="$BACKUP_DIR/$DATE"
+find $BACKUP_DIR -type d -mtime +7 -exec rm -rf {} +
 ```
 
-### Application Updates
-
+**Add to Crontab:**
 ```bash
-cd /var/www/EduCertEngine
-git pull
-npm install
-npm run build
-pm2 restart educertsuite
+0 2 * * * /path/to/backup-script.sh
 ```
 
-## Performance Optimization
+### File Backup
 
-### 1. Enable Caching
-
-Configure Redis for session storage and caching.
-
-### 2. CDN Setup
-
-Use Cloudflare or AWS CloudFront for static assets.
-
-### 3. Database Optimization
-
-- Enable connection pooling
-- Add indexes for frequently queried fields
-- Regular VACUUM and ANALYZE
-
-### 4. Image Optimization
-
-Install Sharp for automatic image optimization:
+Sync to S3:
 ```bash
-npm install sharp
+aws s3 sync ./public/certificates s3://educert-backup/certificates/
+aws s3 sync ./public/templates s3://educert-backup/templates/
 ```
 
 ## Security Checklist
 
-- ✅ Enable HTTPS
-- ✅ Configure firewall (UFW)
-- ✅ Regular security updates
-- ✅ Strong JWT secret (32+ characters)
-- ✅ Rate limiting on APIs
-- ✅ Database backups
-- ✅ Environment variables secured
-- ✅ CORS configuration
-- ✅ Security headers configured
+- [ ] Use strong JWT secret (min 32 characters)
+- [ ] Enable HTTPS/SSL
+- [ ] Configure firewall (UFW or AWS Security Groups)
+- [ ] Use environment variables for secrets
+- [ ] Enable MongoDB authentication
+- [ ] Regular security updates
+- [ ] Implement rate limiting
+- [ ] Setup CORS properly
+- [ ] Use helmet.js for security headers
+- [ ] Regular database backups
+- [ ] Monitor logs for suspicious activity
+
+## Performance Optimization
+
+### Enable Gzip Compression in Nginx
+
+```nginx
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+```
+
+### Database Indexing
+
+Ensure all indexes are created:
+```javascript
+// Already configured in models
+- university.subdomain
+- certificate.certificateNumber
+- certificate.verificationCode
+- Full-text search on student info
+```
+
+### Caching (Optional)
+
+Consider Redis for:
+- Session storage
+- API response caching
+- Rate limiting
+
+## Scaling
+
+### Horizontal Scaling
+
+1. **Load Balancer**: Use Nginx or AWS ELB
+2. **Multiple Instances**: Run multiple PM2 instances
+3. **Database Replication**: MongoDB replica sets
+
+### Vertical Scaling
+
+- Upgrade server resources (CPU, RAM)
+- Optimize database queries
+- Use CDN for static assets
 
 ## Troubleshooting
 
-### Database Connection Error
-```bash
-# Check PostgreSQL status
-sudo systemctl status postgresql
+### Application Won't Start
 
-# Verify connection string
-psql $DATABASE_URL
+```bash
+# Check logs
+pm2 logs educertengine
+
+# Check MongoDB status
+sudo systemctl status mongod
+
+# Test MongoDB connection
+mongo --eval "db.adminCommand('ping')"
 ```
 
 ### Subdomain Not Working
-```bash
-# Verify DNS propagation
-dig subdomain.yourdomain.com
 
-# Check Nginx configuration
-sudo nginx -t
+1. Check DNS propagation: `nslookup subdomain.educert.com`
+2. Verify Nginx configuration
+3. Check BASE_DOMAIN in .env
+
+### File Upload Issues
+
+1. Check directory permissions: `chmod 755 public/uploads`
+2. Verify MAX_FILE_SIZE in .env
+3. Check disk space: `df -h`
+
+## Maintenance
+
+### Update Application
+
+```bash
+cd /var/www/EduCertEngine
+git pull origin main
+npm install
+pm2 restart educertengine
 ```
 
-### Application Not Starting
+### Monitor Disk Space
+
 ```bash
-# Check Node.js version
-node --version
+# Check disk usage
+df -h
 
-# Verify dependencies
-npm install
+# Clean old logs
+pm2 flush
+```
 
-# Check logs
-pm2 logs
+### Database Maintenance
+
+```bash
+# Compact database
+mongo educertengine --eval "db.runCommand({ compact: 'certificates' })"
+
+# Rebuild indexes
+mongo educertengine --eval "db.certificates.reIndex()"
 ```
 
 ## Support
 
-For issues:
-1. Check logs
-2. Review documentation
-3. Open GitHub issue
-4. Contact support
+For deployment issues, please:
+1. Check logs first
+2. Review this guide
+3. Search existing GitHub issues
+4. Create new issue with detailed error logs
 
-## License
+## Additional Resources
 
-MIT License - See LICENSE file
+- [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
+- [MongoDB Production Notes](https://docs.mongodb.com/manual/administration/production-notes/)
+- [Nginx Documentation](https://nginx.org/en/docs/)
+- [PM2 Documentation](https://pm2.keymetrics.io/docs/)

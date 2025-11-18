@@ -1,0 +1,6 @@
+studentName,rollNumber,email,courseName,completionDate,grade
+Jane Smith,2024001,jane@example.com,Computer Science,2024-05-15,A
+John Doe,2024002,john@example.com,Mathematics,2024-05-15,B+
+Alice Johnson,2024003,alice@example.com,Physics,2024-05-15,A-
+Bob Wilson,2024004,bob@example.com,Chemistry,2024-05-15,B
+Carol Davis,2024005,carol@example.com,Biology,2024-05-15,A
