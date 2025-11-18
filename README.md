@@ -1,24 +1,66 @@
-📘 EduCertSuite – Multi-University Certificate & Marksheet Management Platform
+# 📘 EduCertSuite – Multi-University Certificate & Marksheet Management Platform
 
 A powerful multi-university platform for generating, managing, verifying, and distributing Certificates, Marksheets, Admit Cards, and Academic Documents with custom subdomains, dynamic templates, and QR verification.
 
-EduCertSuite enables schools, colleges, universities, and training institutions to generate documents at scale using:
+## 🎯 Project Status
 
-HTML templates
+✅ **Core Infrastructure Complete**
+- Next.js 14 with App Router
+- Prisma ORM with PostgreSQL support
+- Multi-tenant architecture
+- Subdomain routing middleware
+- Authentication system (JWT)
+- Complete database schema
 
-PDF/JPEG mapped templates
+✅ **Admin Panels**
+- Super Admin Dashboard
+- University Admin Dashboard
+- Settings & Branding
+- Template Management
+- CSV Creator
 
-Direct-upload mode
+✅ **Public Features**
+- Landing page
+- Student portal
+- Document search
 
-Bulk CSV import
+🚧 **In Development**
+- Template builders
+- Document generation
+- File uploads
+- QR verification
 
-Dynamic student data
+## 🚀 Quick Start
 
-Drag-and-drop UI
+See [SETUP.md](./SETUP.md) for detailed installation instructions.
 
-QR verification toggle
+```bash
+npm install
+cp .env.example .env
+npx prisma generate
+npx prisma migrate dev
+npm run dev
+```
 
-Multi-tenant subdomain routing
+## 📚 Documentation
+
+- [Setup Guide](./SETUP.md)
+- [API Documentation](./API_DOCUMENTATION.md)
+
+---
+
+## Key Features Overview
+
+EduCertSuite enables institutions to generate documents at scale using:
+
+- HTML templates
+- PDF/JPEG mapped templates
+- Direct-upload mode
+- Bulk CSV import
+- Dynamic student data
+- Drag-and-drop UI
+- QR verification toggle
+- Multi-tenant subdomain routing
 
 🚀 Key Features
 🏫 Multi-University Support

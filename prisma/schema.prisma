@@ -1,0 +1,251 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Super Admin Model
+model SuperAdmin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// University/Tenant Model
+model University {
+  id          String   @id @default(cuid())
+  name        String
+  subdomain   String   @unique
+  slug        String   @unique
+  
+  // Branding
+  logo        String?
+  primaryColor String  @default("#3b82f6")
+  secondaryColor String @default("#1e40af")
+  headerImage String?
+  footerImage String?
+  stampImage  String?
+  signatureImage String?
+  watermark   String?
+  
+  // QR Settings
+  qrEnabled   Boolean  @default(true)
+  
+  // SEO Settings
+  seoTitle    String?
+  seoDescription String?
+  seoKeywords String?
+  seoOgImage  String?
+  seoJsonLd   String?  @db.Text
+  
+  // Landing Page Settings
+  landingPageData Json?
+  
+  // Status
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  admins      UniversityAdmin[]
+  templates   Template[]
+  students    Student[]
+  documents   Document[]
+  csvConfigs  CsvConfig[]
+  auditLogs   AuditLog[]
+  
+  @@index([subdomain])
+  @@index([slug])
+}
+
+// University Admin Model
+model UniversityAdmin {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  password     String
+  name         String
+  role         String     @default("admin") // admin, super_admin
+  universityId String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  @@index([universityId])
+  @@index([email])
+}
+
+// Template Types Enum
+enum TemplateType {
+  HTML
+  PDF_MAPPER
+  DIRECT_UPLOAD
+}
+
+// Template Model
+model Template {
+  id           String       @id @default(cuid())
+  universityId String
+  university   University   @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  
+  name         String
+  type         TemplateType
+  description  String?
+  
+  // Template Content
+  htmlContent  String?      @db.Text
+  htmlConfig   Json?        // Fabric.js or Konva.js config
+  
+  // PDF/JPEG Mapper
+  backgroundUrl String?
+  mappingConfig Json?        // Field mapping configuration
+  
+  // Direct Upload
+  zipUrl       String?
+  fileMapping  Json?        // CSV to filename mapping
+  
+  // QR Settings
+  qrEnabled    Boolean      @default(true)
+  qrPosition   Json?        // x, y coordinates
+  
+  // Status
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  
+  // Relations
+  documents    Document[]
+  csvConfig    CsvConfig?
+  
+  @@index([universityId])
+  @@index([type])
+}
+
+// CSV Configuration Model
+model CsvConfig {
+  id           String     @id @default(cuid())
+  universityId String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  templateId   String     @unique
+  template     Template   @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  name         String
+  fields       Json       // Array of field definitions
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  @@index([universityId])
+}
+
+// Student Model
+model Student {
+  id           String     @id @default(cuid())
+  universityId String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  
+  // Student Info
+  rollNo       String
+  regNo        String?
+  name         String
+  fatherName   String?
+  motherName   String?
+  dob          DateTime?
+  email        String?
+  mobile       String?
+  
+  // Additional Data
+  customData   Json?      // Flexible field storage
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  // Relations
+  documents    Document[]
+  
+  @@unique([universityId, rollNo])
+  @@index([universityId])
+  @@index([rollNo])
+  @@index([regNo])
+  @@index([mobile])
+}
+
+// Document Model
+model Document {
+  id           String     @id @default(cuid())
+  universityId String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  templateId   String
+  template     Template   @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  // Document Data
+  title        String
+  pdfUrl       String?
+  jpegUrl      String?
+  qrHash       String?    @unique
+  qrUrl        String?
+  
+  // Metadata
+  metadata     Json?
+  
+  // Status
+  isPublished  Boolean    @default(false)
+  publishedAt  DateTime?
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  @@index([universityId])
+  @@index([studentId])
+  @@index([templateId])
+  @@index([qrHash])
+}
+
+// File Upload Model
+model FileUpload {
+  id           String     @id @default(cuid())
+  universityId String?
+  
+  fileName     String
+  originalName String
+  fileType     String
+  fileSize     Int
+  fileUrl      String
+  folder       String     @default("uploads")
+  
+  createdAt    DateTime   @default(now())
+  
+  @@index([universityId])
+  @@index([folder])
+}
+
+// Audit Log Model
+model AuditLog {
+  id           String     @id @default(cuid())
+  universityId String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  
+  userId       String
+  userName     String
+  action       String
+  entity       String
+  entityId     String?
+  details      Json?
+  ipAddress    String?
+  userAgent    String?
+  
+  createdAt    DateTime   @default(now())
+  
+  @@index([universityId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
