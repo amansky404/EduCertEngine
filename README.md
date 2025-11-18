@@ -41,6 +41,12 @@ A comprehensive Multi-University Certificate & Marksheet Management Platform wit
 - **JWT Authentication**: Secure API endpoints
 - **University Isolation**: Users can only access their university's data
 - **Certificate Revocation**: Ability to revoke and track revoked certificates
+- **Rate Limiting**: Protection against abuse and DDoS attacks
+  - General API: 100 requests per 15 minutes
+  - Authentication: 5 attempts per 15 minutes (with skip on success)
+  - File Uploads: 50 per hour
+  - Certificate Generation: 100 per hour
+  - Public Verification: 1000 per 15 minutes
 
 ## Tech Stack
 
@@ -56,6 +62,7 @@ A comprehensive Multi-University Certificate & Marksheet Management Platform wit
 - **helmet**: Security headers
 - **bcryptjs**: Password hashing
 - **CORS**: Cross-origin resource sharing
+- **express-rate-limit**: Rate limiting and DDoS protection
 
 ## Installation
 
