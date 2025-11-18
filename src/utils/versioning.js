@@ -220,7 +220,6 @@ function findDifferences(obj1, obj2) {
  * @returns {Object} - Differences
  */
 function findMapDifferences(map1, map2) {
-  const diffs = {};
 
   // Convert maps to objects for comparison
   const obj1 = Object.fromEntries(map1);
