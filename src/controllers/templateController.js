@@ -2,7 +2,6 @@ const Template = require('../models/Template');
 const path = require('path');
 const fs = require('fs').promises;
 const {
-  mergeTemplateVariables,
   extractTemplateVariables,
   validateTemplateHTML,
   generateFieldMapping,
