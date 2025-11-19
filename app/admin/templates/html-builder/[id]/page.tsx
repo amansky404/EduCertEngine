@@ -27,6 +27,13 @@ export default function HtmlBuilderPage() {
   const [fontFamily, setFontFamily] = useState("Arial")
   const [textColor, setTextColor] = useState("#000000")
   const [bgColor, setBgColor] = useState("#ffffff")
+  
+  // Shape properties
+  const [shapeFillColor, setShapeFillColor] = useState("#e0e0e0")
+  const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000")
+  const [shapeStrokeWidth, setShapeStrokeWidth] = useState(2)
+  const [showShapeFillPicker, setShowShapeFillPicker] = useState(false)
+  const [showShapeStrokePicker, setShowShapeStrokePicker] = useState(false)
 
   useEffect(() => {
     fetchTemplate()
@@ -120,6 +127,10 @@ export default function HtmlBuilderPage() {
       setFontSize(obj.fontSize || 20)
       setFontFamily(obj.fontFamily || "Arial")
       setTextColor(obj.fill || "#000000")
+    } else if (obj.type === "rect" || obj.type === "circle" || obj.type === "line") {
+      setShapeFillColor(obj.fill || "#e0e0e0")
+      setShapeStrokeColor(obj.stroke || "#000000")
+      setShapeStrokeWidth(obj.strokeWidth || 2)
     }
   }
 
@@ -537,6 +548,20 @@ export default function HtmlBuilderPage() {
         fontSize: fontSize,
         fontFamily: fontFamily,
         fill: textColor,
+      })
+      canvas.renderAll()
+      saveState()
+    }
+  }
+
+  const updateSelectedShape = () => {
+    if (!canvas || !selectedObject) return
+
+    if (selectedObject.type === "rect" || selectedObject.type === "circle" || selectedObject.type === "line") {
+      selectedObject.set({
+        fill: shapeFillColor,
+        stroke: shapeStrokeColor,
+        strokeWidth: shapeStrokeWidth,
       })
       canvas.renderAll()
       saveState()
@@ -1474,6 +1499,101 @@ export default function HtmlBuilderPage() {
                               </div>
                             )}
                           </div>
+                        </div>
+                      </>
+                    )}
+                    {(selectedObject.type === "rect" || selectedObject.type === "circle" || selectedObject.type === "line") && (
+                      <>
+                        <div className="space-y-2">
+                          <Label className="flex items-center">
+                            <Palette className="mr-2 h-4 w-4" />
+                            Fill Color
+                          </Label>
+                          <div className="space-y-2">
+                            <div 
+                              className="w-full h-10 rounded border-2 cursor-pointer"
+                              style={{ backgroundColor: shapeFillColor }}
+                              onClick={() => setShowShapeFillPicker(!showShapeFillPicker)}
+                            />
+                            {showShapeFillPicker && (
+                              <div className="p-2 bg-white dark:bg-gray-800 rounded border shadow-lg">
+                                <HexColorPicker 
+                                  color={shapeFillColor} 
+                                  onChange={(color) => {
+                                    setShapeFillColor(color)
+                                    if (canvas && selectedObject) {
+                                      selectedObject.set({ fill: color })
+                                      canvas.renderAll()
+                                    }
+                                  }}
+                                />
+                                <Input
+                                  type="text"
+                                  value={shapeFillColor}
+                                  onChange={(e) => {
+                                    setShapeFillColor(e.target.value)
+                                    updateSelectedShape()
+                                  }}
+                                  className="mt-2"
+                                  placeholder="#e0e0e0"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="flex items-center">
+                            <Palette className="mr-2 h-4 w-4" />
+                            Border Color
+                          </Label>
+                          <div className="space-y-2">
+                            <div 
+                              className="w-full h-10 rounded border-2 cursor-pointer"
+                              style={{ backgroundColor: shapeStrokeColor }}
+                              onClick={() => setShowShapeStrokePicker(!showShapeStrokePicker)}
+                            />
+                            {showShapeStrokePicker && (
+                              <div className="p-2 bg-white dark:bg-gray-800 rounded border shadow-lg">
+                                <HexColorPicker 
+                                  color={shapeStrokeColor} 
+                                  onChange={(color) => {
+                                    setShapeStrokeColor(color)
+                                    if (canvas && selectedObject) {
+                                      selectedObject.set({ stroke: color })
+                                      canvas.renderAll()
+                                    }
+                                  }}
+                                />
+                                <Input
+                                  type="text"
+                                  value={shapeStrokeColor}
+                                  onChange={(e) => {
+                                    setShapeStrokeColor(e.target.value)
+                                    updateSelectedShape()
+                                  }}
+                                  className="mt-2"
+                                  placeholder="#000000"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Border Width</Label>
+                          <Input
+                            type="number"
+                            value={shapeStrokeWidth}
+                            onChange={(e) => {
+                              const newWidth = Number(e.target.value)
+                              setShapeStrokeWidth(newWidth)
+                              if (canvas && selectedObject) {
+                                selectedObject.set({ strokeWidth: newWidth })
+                                canvas.renderAll()
+                              }
+                            }}
+                            min="0"
+                            max="50"
+                          />
                         </div>
                       </>
                     )}
