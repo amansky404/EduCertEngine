@@ -2,7 +2,7 @@
 
 ## Overview
 
-EduCertEngine is a multi-tenancy certificate and marksheet management platform built with a microservices-ready architecture. This document describes the system architecture, design decisions, and implementation details.
+EduCertEngine is a modern multi-tenant certificate and document management platform built with **Next.js 14**, **Prisma ORM**, and **TypeScript**. This document describes the system architecture, design patterns, and technical implementation.
 
 ## System Architecture
 
@@ -12,58 +12,73 @@ EduCertEngine is a multi-tenancy certificate and marksheet management platform b
 ┌─────────────────────────────────────────────────────────────┐
 │                         Client Layer                         │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   Web App    │  │  Mobile App  │  │  Public Site │      │
+│  │ Admin Panel  │  │ Student      │  │   Public     │      │
+│  │    (React)   │  │   Portal     │  │ Verification │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                      API Gateway Layer                       │
+│                    Next.js Application                       │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │  Express.js Server (Port 5000)                       │   │
-│  │  - Subdomain Middleware                              │   │
-│  │  - Authentication/Authorization                      │   │
-│  │  - Rate Limiting                                     │   │
-│  │  - Request Validation                                │   │
+│  │  Next.js 14 Server (Port 3000)                      │   │
+│  │  - App Router                                        │   │
+│  │  - Server Components                                 │   │
+│  │  - API Routes                                        │   │
+│  │  - Middleware (Subdomain Detection)                  │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                     Business Logic Layer                     │
+│                    API Routes Layer                          │
 │  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌─────────┐ │
-│  │   Auth    │  │University │  │ Template  │  │  Cert   │ │
-│  │Controller │  │Controller │  │Controller │  │Controller│ │
+│  │   /auth   │  │/university│  │ /template │  │/student │ │
+│  │  Routes   │  │  Routes   │  │  Routes   │  │ Routes  │ │
 │  └───────────┘  └───────────┘  └───────────┘  └─────────┘ │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                      Data Access Layer                       │
-│  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌─────────┐ │
-│  │   User    │  │University │  │ Template  │  │  Cert   │ │
-│  │   Model   │  │   Model   │  │   Model   │  │  Model  │ │
-│  └───────────┘  └───────────┘  └───────────┘  └─────────┘ │
+│                   Business Logic Layer                       │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Utility Libraries (/lib)                           │   │
+│  │  - auth.ts (JWT, bcrypt)                            │   │
+│  │  - prisma.ts (Database client)                      │   │
+│  │  - pdf.ts (PDF generation)                          │   │
+│  │  - qr.ts (QR code generation)                       │   │
+│  │  - tenant.ts (Multi-tenancy utilities)              │   │
+│  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                       Database Layer                         │
-│                    MongoDB (NoSQL)                           │
-│  - Universities Collection                                   │
-│  - Users Collection                                          │
-│  - Templates Collection                                      │
-│  - Certificates Collection                                   │
+│                    Data Access Layer                         │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Prisma ORM                                         │   │
+│  │  - Type-safe database queries                       │   │
+│  │  - Schema validation                                │   │
+│  │  - Migration management                             │   │
+│  │  - Connection pooling                               │   │
+│  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                      File Storage Layer                      │
-│  Local Storage / AWS S3 / Cloud Storage                     │
-│  - Certificate PDFs                                          │
-│  - Template Backgrounds                                      │
-│  - QR Codes                                                  │
-│  - User Uploads                                              │
+│                      Database Layer                          │
+│  PostgreSQL / SQLite                                         │
+│  - SuperAdmin, University, UniversityAdmin                   │
+│  - Template, CsvConfig                                       │
+│  - Student, Document                                         │
+│  - FileUpload, AuditLog                                      │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    File Storage Layer                        │
+│  Local Storage / AWS S3 / Cloudflare R2                     │
+│  - Document PDFs, Template backgrounds                       │
+│  - QR Codes, Branding assets, User uploads                  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -71,459 +86,259 @@ EduCertEngine is a multi-tenancy certificate and marksheet management platform b
 
 ### 1. Multi-Tenancy System
 
-**Subdomain Routing:**
+**Subdomain Routing**:
 ```
-tech-uni.educert.com → Tech University
-medical-college.educert.com → Medical College
+educert.com                    → Main site
+techuni.educert.com           → Tech University
+medicalcollege.educert.com    → Medical College
 ```
 
-**Implementation:**
-- Middleware extracts subdomain from request host
-- Looks up university by subdomain
+**Implementation**:
+- Next.js middleware extracts subdomain from Host header
+- Looks up university by subdomain in database
 - Attaches university context to request
-- All subsequent operations are scoped to that university
+- All subsequent operations scoped to that university
 
-**Key Files:**
-- `src/middleware/subdomain.js`
-- `src/models/University.js`
+**Key Files**:
+- `middleware.ts` - Subdomain detection and routing
+- `lib/tenant.ts` - Multi-tenancy utilities
+- `prisma/schema.prisma` - University model with unique subdomain
 
 ### 2. Authentication & Authorization
 
-**Authentication Flow:**
-```
+**Authentication Flow**:
 1. User submits credentials
-2. Server validates against database
-3. JWT token generated and returned
-4. Client includes token in subsequent requests
-5. Middleware validates token on each request
-```
+2. Server validates against Prisma database
+3. bcrypt verifies password
+4. JWT token generated
+5. Token returned to client
+6. Client includes token in Authorization header
+7. API routes verify token before processing
 
-**Authorization Hierarchy:**
-- **Super Admin**: Full system access, can manage all universities
-- **Admin**: University-level access, can manage templates and certificates
-- **Staff**: Limited access, can create certificates
+**Authorization Hierarchy**:
+- **Super Admin**: Full system access, manage all universities
+- **University Admin**: University-level access, manage templates/students/documents
+- **Public (Students)**: No auth required, view published documents
 
-**Key Files:**
-- `src/middleware/auth.js`
-- `src/controllers/authController.js`
-- `src/models/User.js`
+**Key Files**:
+- `lib/auth.ts` - JWT and bcrypt utilities
+- `app/api/auth/*/route.ts` - Authentication endpoints
 
-### 3. Template Management
+### 3. Template System
 
-**Template Structure:**
-```javascript
-{
-  name: "Graduation Certificate",
-  type: "certificate",
-  fields: [
-    {
-      name: "studentName",
-      type: "text",
-      position: { x: 100, y: 200 },
-      style: { fontSize: 24, fontWeight: "bold" }
-    }
-  ],
-  dimensions: { width: 792, height: 612 }
+**Three Template Types**:
+
+1. **HTML Template Builder**
+   - Visual drag-and-drop editor using Fabric.js
+   - Custom HTML/CSS support
+   - Dynamic field mapping
+   - Exports to PDF
+
+2. **PDF/JPEG Field Mapper**
+   - Upload existing certificate design
+   - Visual field positioning
+   - Overlay text on existing design
+   - Uses pdf-lib for PDF manipulation
+
+3. **Direct Upload Mode**
+   - Bulk upload pre-generated PDFs as ZIP
+   - CSV maps student data to filenames
+   - No generation required
+
+**Key Files**:
+- `app/api/template/*/route.ts` - Template operations
+- `lib/pdf.ts` - PDF generation utilities
+
+### 4. Document Generation
+
+**Workflow**:
+1. CSV Upload
+2. Parse CSV and validate fields
+3. Create student records
+4. Create document records
+5. Generate PDFs based on template type
+6. Generate QR codes (if enabled)
+7. Store PDF URLs and QR hashes
+8. Publish documents
+
+**Key Files**:
+- `app/api/student/import/route.ts` - Bulk import
+- `lib/pdf.ts` - PDF generation
+- `lib/qr.ts` - QR code generation
+
+## Database Schema (Prisma)
+
+### Key Models
+
+```prisma
+model SuperAdmin {
+  id       String @id @default(cuid())
+  email    String @unique
+  password String // bcrypt hashed
+  name     String
+}
+
+model University {
+  id             String   @id @default(cuid())
+  name           String
+  subdomain      String   @unique
+  slug           String   @unique
+  primaryColor   String
+  secondaryColor String
+  qrEnabled      Boolean
+  // ... branding, SEO fields
+  
+  admins    UniversityAdmin[]
+  templates Template[]
+  students  Student[]
+  documents Document[]
+}
+
+model Template {
+  id            String  @id @default(cuid())
+  universityId  String
+  name          String
+  type          String  // HTML, PDF_MAPPER, DIRECT_UPLOAD
+  htmlContent   String?
+  backgroundUrl String?
+  qrEnabled     Boolean
+  
+  documents Document[]
+}
+
+model Student {
+  id           String @id @default(cuid())
+  universityId String
+  rollNo       String
+  name         String
+  // ... other fields
+  
+  documents Document[]
+  @@unique([universityId, rollNo])
+}
+
+model Document {
+  id          String  @id @default(cuid())
+  studentId   String
+  templateId  String
+  pdfUrl      String?
+  qrHash      String? @unique
+  isPublished Boolean @default(false)
 }
 ```
-
-**Field Types:**
-- Text: Student names, course names, etc.
-- Number: Roll numbers, marks
-- Date: Completion dates, issue dates
-- QR Code: Verification codes
-- Image: Photos, signatures
-
-**Key Files:**
-- `src/models/Template.js`
-- `src/controllers/templateController.js`
-
-### 4. Certificate Generation
-
-**Generation Pipeline:**
-```
-CSV Upload → Parse → Validate → Create Records → Generate PDFs → Create QR Codes
-```
-
-**Steps:**
-1. Parse CSV file
-2. Validate against template fields
-3. Create certificate records in database
-4. Generate unique certificate numbers
-5. Generate verification codes
-6. Create QR codes
-7. Generate PDF files
-8. Store file paths in database
-
-**Key Files:**
-- `src/utils/csvParser.js`
-- `src/utils/pdfGenerator.js`
-- `src/utils/qrGenerator.js`
-- `src/controllers/certificateController.js`
-
-### 5. Verification System
-
-**Verification Flow:**
-```
-User scans QR → Redirected to verification page → 
-Enter code → Server validates → Display certificate details
-```
-
-**Security Features:**
-- Unique verification codes (12 characters)
-- Public verification endpoint (no auth required)
-- Certificate status check (issued, revoked)
-- University validation
-
-## Data Models
-
-### University Model
-
-```javascript
-{
-  name: String,
-  subdomain: String (unique, indexed),
-  logo: String,
-  branding: {
-    primaryColor: String,
-    secondaryColor: String,
-    fontFamily: String
-  },
-  landingPage: { ... },
-  seo: { ... },
-  settings: {
-    enableQRCode: Boolean,
-    allowDirectUpload: Boolean,
-    allowBulkImport: Boolean
-  },
-  admins: [ObjectId],
-  isActive: Boolean
-}
-```
-
-### User Model
-
-```javascript
-{
-  name: String,
-  email: String (unique, indexed),
-  password: String (hashed),
-  role: Enum['superadmin', 'admin', 'staff'],
-  university: ObjectId,
-  isActive: Boolean
-}
-```
-
-### Template Model
-
-```javascript
-{
-  university: ObjectId,
-  name: String,
-  type: Enum['certificate', 'marksheet', ...],
-  fields: [FieldSchema],
-  dimensions: DimensionSchema,
-  qrCode: QRCodeSchema,
-  version: Number,
-  isActive: Boolean
-}
-```
-
-### Certificate Model
-
-```javascript
-{
-  university: ObjectId,
-  template: ObjectId,
-  certificateNumber: String (unique, indexed),
-  studentInfo: { ... },
-  courseInfo: { ... },
-  fieldData: Map,
-  pdfFile: String,
-  qrCode: String,
-  verificationCode: String (unique, indexed),
-  status: Enum['draft', 'generated', 'issued', 'revoked'],
-  batchId: String
-}
-```
-
-## Design Patterns
-
-### 1. MVC Architecture
-
-```
-Model → Data structure and database operations
-View → Client applications (future)
-Controller → Business logic and request handling
-```
-
-### 2. Middleware Pattern
-
-```javascript
-Request → Middleware Chain → Route Handler → Response
-          ↓
-    - CORS
-    - Helmet (Security)
-    - Body Parser
-    - File Upload
-    - Subdomain Detection
-    - Authentication
-    - Authorization
-```
-
-### 3. Repository Pattern (Mongoose Models)
-
-Encapsulates data access logic in models.
-
-### 4. Factory Pattern (Certificate Generation)
-
-Generates different types of certificates based on templates.
 
 ## Security Architecture
 
-### 1. Authentication Security
-
-- Passwords hashed with bcrypt (10 salt rounds)
-- JWT tokens with expiration
+### Authentication Security
+- bcrypt password hashing (10 salt rounds)
+- JWT tokens with 30-day expiration
 - Secure token storage
-- Password requirements (minimum 6 characters)
-
-### 2. Authorization Security
-
-- Role-based access control (RBAC)
-- University-scoped data access
-- Protected routes with middleware
 - Token validation on each request
 
-### 3. Data Security
+### Authorization Security
+- Role-based access control (RBAC)
+- Database-level data isolation
+- All queries filtered by universityId
+- Prisma middleware enforces scoping
 
-- MongoDB authentication enabled
-- Environment variables for secrets
-- Input validation
-- SQL injection prevention (NoSQL, parameterized queries)
-- XSS prevention (helmet middleware)
+### Data Security
+- SQL injection prevented by Prisma
+- XSS prevention via React escaping
+- Input validation with TypeScript
+- Secure file upload validation
 
-### 4. File Security
+## Performance Optimization
 
-- File type validation
-- File size limits
-- Secure file paths
-- Access control for sensitive files
+### Database Optimization
+- Indexed fields: subdomain, universityId, rollNo, qrHash
+- Pagination for large datasets
+- Selective field loading
+- Connection pooling
 
-### 5. API Security
+### Caching Strategy
+- Next.js static page caching
+- API route caching with revalidate
+- Image optimization and caching
+- Future: Redis for sessions
 
-- CORS configuration
-- Helmet security headers
-- Rate limiting (planned)
-- Request validation
+### File Storage
+- Development: Local file system
+- Production: AWS S3 or Cloudflare R2
+- PDF compression
+- CDN delivery
 
-## Performance Considerations
+## Deployment
 
-### 1. Database Optimization
-
-**Indexes:**
-- University subdomain (unique)
-- Certificate number (unique)
-- Verification code (unique)
-- Full-text search on student info
-
-**Query Optimization:**
-- Populate only needed fields
-- Pagination for large result sets
-- Lean queries for read-only operations
-
-### 2. Caching Strategy (Future)
-
-- Redis for session storage
-- Cache frequently accessed data
-- Cache generated PDFs
-- CDN for static assets
-
-### 3. File Storage
-
-- Efficient file naming
-- Directory organization
-- Compression for PDFs
-- Cloud storage for production
-
-### 4. Scalability
-
-**Horizontal Scaling:**
-- Stateless API design
-- Load balancer support
-- Clustered database
-- Distributed file storage
-
-**Vertical Scaling:**
-- Optimized queries
-- Efficient algorithms
-- Memory management
-- CPU-intensive tasks offloading
-
-## API Design
-
-### RESTful Principles
-
-```
-GET /api/certificates        - List certificates
-POST /api/certificates       - Create certificate
-GET /api/certificates/:id    - Get certificate
-PUT /api/certificates/:id    - Update certificate
-DELETE /api/certificates/:id - Delete certificate
-```
-
-### Response Format
-
-```javascript
-// Success
-{
-  success: true,
-  data: { ... }
-}
-
-// Error
-{
-  success: false,
-  message: "Error message"
-}
-```
-
-### HTTP Status Codes
-
-- 200: Success
-- 201: Created
-- 400: Bad Request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not Found
-- 500: Internal Server Error
-
-## Deployment Architecture
-
-### Development Environment
-
+### Development
 ```
 Local Machine
-├── Node.js Server (Port 5000)
-├── MongoDB (Port 27017)
-└── File Storage (./public)
+├── Next.js Dev Server (Port 3000)
+├── SQLite Database
+└── Local File Storage
 ```
 
-### Production Environment
-
+### Production (Vercel - Recommended)
 ```
-                    ┌──────────────┐
-                    │ Load Balancer│
-                    └──────────────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-   ┌─────────┐        ┌─────────┐        ┌─────────┐
-   │ Server 1│        │ Server 2│        │ Server 3│
-   └─────────┘        └─────────┘        └─────────┘
-        │                  │                  │
-        └──────────────────┼──────────────────┘
-                           ▼
-                    ┌──────────────┐
-                    │   MongoDB    │
-                    │ Replica Set  │
-                    └──────────────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │  AWS S3 /    │
-                    │ File Storage │
-                    └──────────────┘
+Vercel Platform
+├── Next.js (Serverless Functions)
+├── PostgreSQL (Neon/Supabase)
+└── S3/R2 (File Storage)
+```
+
+### Production (Self-Hosted)
+```
+Server
+├── Nginx (Reverse Proxy)
+├── PM2 + Next.js (Port 3000)
+├── PostgreSQL
+└── MinIO/S3 (File Storage)
 ```
 
 ## Technology Stack
 
-### Backend
-- **Node.js**: Runtime environment
-- **Express.js**: Web framework
-- **MongoDB**: Database
-- **Mongoose**: ODM
+### Core
+- Next.js 14 (App Router)
+- React 18 (Server Components)
+- TypeScript
+- Prisma ORM
+- PostgreSQL/SQLite
 
 ### Libraries
-- **bcryptjs**: Password hashing
-- **jsonwebtoken**: JWT authentication
-- **pdf-lib**: PDF generation
-- **qrcode**: QR code generation
-- **csvtojson**: CSV parsing
-- **helmet**: Security headers
-- **cors**: CORS handling
-
-### DevOps
-- **PM2**: Process management
-- **Nginx**: Reverse proxy
-- **Let's Encrypt**: SSL certificates
-- **Docker**: Containerization (optional)
+- pdf-lib (PDF generation)
+- qrcode (QR codes)
+- bcryptjs (Password hashing)
+- jsonwebtoken (JWT auth)
+- Tailwind CSS (Styling)
+- Radix UI (Components)
+- Fabric.js (Canvas editor)
 
 ## Future Enhancements
 
-### 1. Frontend Application
-- React admin panel
-- Drag-and-drop template designer
-- Real-time preview
-- Analytics dashboard
-
-### 2. Advanced Features
-- Email notifications
-- Blockchain verification
-- Multi-language support
-- Mobile apps
-- Advanced analytics
-
-### 3. Integration
-- LMS integration
-- Payment gateway
-- SMS notifications
-- Cloud storage providers
-
-### 4. Performance
+### Architecture
+- Microservices for PDF generation
+- Message queue (Bull/BullMQ)
 - Redis caching
-- CDN integration
-- Database sharding
-- Microservices architecture
+- Elasticsearch for search
+- WebSockets for real-time updates
 
-## Monitoring & Logging
-
-### Application Monitoring
-- PM2 monitoring
-- Error tracking (Sentry)
-- Performance monitoring (New Relic)
-
-### Logging Strategy
-- Winston for application logs
-- Morgan for HTTP logs
-- Log rotation
-- Centralized logging
-
-### Metrics
-- API response times
-- Database query performance
-- Certificate generation time
-- System resource usage
-
-## Testing Strategy (Future)
-
-### Unit Tests
-- Model validation
-- Utility functions
-- Middleware logic
-
-### Integration Tests
-- API endpoints
-- Database operations
-- File operations
-
-### End-to-End Tests
-- Complete user flows
-- Certificate generation pipeline
-- Verification process
+### Features
+- Email notifications (SendGrid/SES)
+- Mobile app (React Native)
+- 2FA authentication
+- Advanced analytics
+- Blockchain verification
 
 ## Conclusion
 
-EduCertEngine is designed with scalability, security, and maintainability in mind. The architecture supports multi-tenancy, provides robust certificate management, and can be extended for future requirements.
+EduCertEngine uses modern web technologies with focus on:
+- **Scalability**: Multi-tenant with data isolation
+- **Security**: RBAC, JWT auth, bcrypt
+- **Performance**: Next.js optimization, Prisma ORM
+- **Maintainability**: TypeScript, clean architecture
+- **Developer Experience**: Type safety, hot reload
 
-For implementation details, see the code in the `src/` directory.
+For implementation details, see:
+- `/app` - Next.js application
+- `/lib` - Utility libraries
+- `/prisma` - Database schema
+- `/components` - React components
