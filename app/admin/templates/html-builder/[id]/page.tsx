@@ -36,20 +36,31 @@ export default function HtmlBuilderPage() {
         width: 800,
         height: 600,
         backgroundColor: "#ffffff",
+        preserveObjectStacking: true,
       })
 
+      // Improve selection handling
       fabricCanvas.on("selection:created", (e) => {
-        setSelectedObject(e.selected?.[0] || null)
-        updatePropertiesFromSelection(e.selected?.[0])
+        const selected = e.selected?.[0] || null
+        setSelectedObject(selected)
+        updatePropertiesFromSelection(selected)
       })
 
       fabricCanvas.on("selection:updated", (e) => {
-        setSelectedObject(e.selected?.[0] || null)
-        updatePropertiesFromSelection(e.selected?.[0])
+        const selected = e.selected?.[0] || null
+        setSelectedObject(selected)
+        updatePropertiesFromSelection(selected)
       })
 
       fabricCanvas.on("selection:cleared", () => {
         setSelectedObject(null)
+      })
+
+      // Maintain canvas focus
+      fabricCanvas.on("mouse:down", () => {
+        if (canvasRef.current) {
+          canvasRef.current.focus()
+        }
       })
 
       setCanvas(fabricCanvas)
@@ -105,6 +116,27 @@ export default function HtmlBuilderPage() {
   const [history, setHistory] = useState<any[]>([])
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [canvasScale, setCanvasScale] = useState(1)
+  const [layers, setLayers] = useState<fabric.Object[]>([])
+
+  // Update layers when canvas objects change
+  useEffect(() => {
+    if (canvas) {
+      const updateLayers = () => {
+        const objects = canvas.getObjects()
+        setLayers([...objects])
+      }
+
+      canvas.on('object:added', updateLayers)
+      canvas.on('object:removed', updateLayers)
+      canvas.on('object:modified', updateLayers)
+
+      return () => {
+        canvas.off('object:added', updateLayers)
+        canvas.off('object:removed', updateLayers)
+        canvas.off('object:modified', updateLayers)
+      }
+    }
+  }, [canvas])
 
   const saveState = () => {
     if (!canvas) return
@@ -374,8 +406,56 @@ export default function HtmlBuilderPage() {
         fill: textColor,
       })
       canvas.renderAll()
+      saveState()
     }
   }
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent shortcuts when typing in input fields
+      if ((e.target as HTMLElement).tagName === 'INPUT' || 
+          (e.target as HTMLElement).tagName === 'TEXTAREA') {
+        return
+      }
+
+      // Ctrl/Cmd + Z for undo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        undo()
+      }
+
+      // Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y for redo
+      if (((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') || 
+          ((e.ctrlKey || e.metaKey) && e.key === 'y')) {
+        e.preventDefault()
+        redo()
+      }
+
+      // Delete key
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedObject && canvas) {
+          e.preventDefault()
+          deleteSelected()
+        }
+      }
+
+      // Ctrl/Cmd + D for duplicate
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault()
+        duplicateObject()
+      }
+
+      // Ctrl/Cmd + S for save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        saveTemplate()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [canvas, selectedObject, historyIndex, history])
 
   const deleteSelected = () => {
     if (!canvas || !selectedObject) return
@@ -756,8 +836,19 @@ export default function HtmlBuilderPage() {
                 <CardTitle className="text-lg">Design Area</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="border-2 border-gray-300 bg-gray-100 p-4">
-                  <canvas ref={canvasRef} />
+                <div className="relative border-2 border-gray-300 bg-gray-100 p-4 rounded-lg shadow-inner">
+                  <div className="absolute top-2 right-2 bg-white px-3 py-1 rounded shadow-sm text-xs text-gray-600">
+                    {Math.round(canvasScale * 100)}% • {canvas?.getObjects().length || 0} objects
+                  </div>
+                  <canvas 
+                    ref={canvasRef} 
+                    className="mx-auto shadow-lg" 
+                    style={{ 
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      backgroundColor: '#fff'
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -779,7 +870,13 @@ export default function HtmlBuilderPage() {
                           <Input
                             value={textValue}
                             onChange={(e) => setTextValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                updateSelectedText()
+                              }
+                            }}
                             onBlur={updateSelectedText}
+                            placeholder="Enter text..."
                           />
                         </div>
                         <div className="space-y-2">
@@ -787,8 +884,17 @@ export default function HtmlBuilderPage() {
                           <Input
                             type="number"
                             value={fontSize}
-                            onChange={(e) => setFontSize(Number(e.target.value))}
-                            onBlur={updateSelectedText}
+                            onChange={(e) => {
+                              const newSize = Number(e.target.value)
+                              setFontSize(newSize)
+                              if (canvas && selectedObject && (selectedObject.type === "text" || selectedObject.type === "i-text")) {
+                                const textObj = selectedObject as fabric.IText
+                                textObj.set({ fontSize: newSize })
+                                canvas.renderAll()
+                              }
+                            }}
+                            min="8"
+                            max="200"
                           />
                         </div>
                         <div className="space-y-2">
@@ -806,6 +912,9 @@ export default function HtmlBuilderPage() {
                             <option value="Courier New">Courier New</option>
                             <option value="Georgia">Georgia</option>
                             <option value="Verdana">Verdana</option>
+                            <option value="Comic Sans MS">Comic Sans MS</option>
+                            <option value="Impact">Impact</option>
+                            <option value="Trebuchet MS">Trebuchet MS</option>
                           </select>
                         </div>
                         <div className="space-y-2">
@@ -816,7 +925,11 @@ export default function HtmlBuilderPage() {
                               value={textColor}
                               onChange={(e) => {
                                 setTextColor(e.target.value)
-                                updateSelectedText()
+                                if (canvas && selectedObject && (selectedObject.type === "text" || selectedObject.type === "i-text")) {
+                                  const textObj = selectedObject as fabric.IText
+                                  textObj.set({ fill: e.target.value })
+                                  canvas.renderAll()
+                                }
                               }}
                               className="w-20"
                             />
@@ -828,6 +941,7 @@ export default function HtmlBuilderPage() {
                                 updateSelectedText()
                               }}
                               className="flex-1"
+                              placeholder="#000000"
                             />
                           </div>
                         </div>
@@ -847,15 +961,91 @@ export default function HtmlBuilderPage() {
 
             <Card className="mt-4">
               <CardHeader>
-                <CardTitle className="text-lg">Help</CardTitle>
+                <CardTitle className="text-lg">Layers</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-sm text-gray-600 space-y-2">
-                  <p>• Click elements to select them</p>
-                  <p>• Drag to move elements</p>
-                  <p>• Double-click text to edit</p>
-                  <p>• Use variables like {`{{studentName}}`}</p>
-                  <p>• Variables will be replaced with actual data</p>
+                <div className="space-y-1 max-h-60 overflow-y-auto">
+                  {layers.length === 0 ? (
+                    <p className="text-sm text-gray-600">No layers yet</p>
+                  ) : (
+                    layers.slice().reverse().map((layer, index) => {
+                      const actualIndex = layers.length - 1 - index
+                      const isSelected = selectedObject === layer
+                      const layerType = layer.type || 'object'
+                      const layerName = (layer as any).text || 
+                                       (layer.type === 'rect' ? 'Rectangle' :
+                                        layer.type === 'circle' ? 'Circle' :
+                                        layer.type === 'line' ? 'Line' :
+                                        layer.type === 'image' ? 'Image' :
+                                        layer.type === 'group' ? 'QR Code' : 'Object')
+                      
+                      return (
+                        <div
+                          key={actualIndex}
+                          className={`flex items-center justify-between p-2 rounded cursor-pointer ${
+                            isSelected ? 'bg-blue-100 border border-blue-500' : 'hover:bg-gray-100'
+                          }`}
+                          onClick={() => {
+                            if (canvas) {
+                              canvas.setActiveObject(layer)
+                              canvas.renderAll()
+                            }
+                          }}
+                        >
+                          <div className="flex-1 text-sm truncate">
+                            <span className="font-medium">{layerName}</span>
+                            <span className="text-gray-500 ml-2 text-xs">({layerType})</span>
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (canvas) {
+                                  canvas.setActiveObject(layer)
+                                  duplicateObject()
+                                }
+                              }}
+                              className="p-1 hover:bg-gray-200 rounded text-xs"
+                              title="Duplicate"
+                            >
+                              ⎘
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (canvas) {
+                                  canvas.remove(layer)
+                                  canvas.renderAll()
+                                  saveState()
+                                }
+                              }}
+                              className="p-1 hover:bg-red-100 rounded text-xs"
+                              title="Delete"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="text-lg">Keyboard Shortcuts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>• <kbd className="px-1 bg-gray-200 rounded">Ctrl/Cmd+Z</kbd> Undo</p>
+                  <p>• <kbd className="px-1 bg-gray-200 rounded">Ctrl/Cmd+Shift+Z</kbd> Redo</p>
+                  <p>• <kbd className="px-1 bg-gray-200 rounded">Ctrl/Cmd+D</kbd> Duplicate</p>
+                  <p>• <kbd className="px-1 bg-gray-200 rounded">Ctrl/Cmd+S</kbd> Save</p>
+                  <p>• <kbd className="px-1 bg-gray-200 rounded">Delete</kbd> Delete selected</p>
+                  <p>• Double-click text to edit inline</p>
+                  <p>• Drag to move, corners to resize</p>
                 </div>
               </CardContent>
             </Card>

@@ -85,6 +85,52 @@ export default function LandingBuilderPage() {
   const [selectedSection, setSelectedSection] = useState<Section | null>(null)
   const [newSectionType, setNewSectionType] = useState("hero")
   const [draggedSection, setDraggedSection] = useState<string | null>(null)
+  const [dragOverSection, setDragOverSection] = useState<string | null>(null)
+
+  const handleDragStart = (e: React.DragEvent, sectionId: string) => {
+    setDraggedSection(sectionId)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e: React.DragEvent, sectionId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverSection(sectionId)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverSection(null)
+  }
+
+  const handleDrop = (e: React.DragEvent, targetSectionId: string) => {
+    e.preventDefault()
+    setDragOverSection(null)
+
+    if (!draggedSection || draggedSection === targetSectionId) {
+      return
+    }
+
+    const draggedIndex = sections.findIndex(s => s.id === draggedSection)
+    const targetIndex = sections.findIndex(s => s.id === targetSectionId)
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      return
+    }
+
+    const newSections = [...sections]
+    const [removed] = newSections.splice(draggedIndex, 1)
+    newSections.splice(targetIndex, 0, removed)
+
+    // Update order
+    newSections.forEach((s, i) => s.order = i)
+    setSections(newSections)
+    setDraggedSection(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedSection(null)
+    setDragOverSection(null)
+  }
 
   const handleSave = () => {
     // TODO: Implement API call to save landing page configuration
@@ -589,21 +635,34 @@ export default function LandingBuilderPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Sections</CardTitle>
-                <CardDescription>{sections.length} sections</CardDescription>
+                <CardDescription>{sections.length} sections • Drag to reorder</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 {sections.map((section, index) => (
                   <div
                     key={section.id}
-                    className={`p-3 border rounded cursor-pointer transition-colors ${
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, section.id)}
+                    onDragOver={(e) => handleDragOver(e, section.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, section.id)}
+                    onDragEnd={handleDragEnd}
+                    className={`p-3 border rounded cursor-move transition-all ${
                       selectedSection?.id === section.id
                         ? "bg-blue-50 border-blue-500"
+                        : dragOverSection === section.id
+                        ? "bg-green-50 border-green-500 border-2"
+                        : draggedSection === section.id
+                        ? "opacity-50"
                         : "hover:bg-gray-50"
                     }`}
                     onClick={() => setSelectedSection(section)}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-sm">{section.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400 cursor-move">⋮⋮</span>
+                        <span className="font-medium text-sm">{section.name}</span>
+                      </div>
                       <div className="flex items-center gap-1">
                         <input
                           type="checkbox"
