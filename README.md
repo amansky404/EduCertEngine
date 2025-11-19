@@ -1,6 +1,6 @@
 # EduCertEngine
 
-A comprehensive Multi-University Certificate & Marksheet Management Platform with dynamic subdomains, custom landing pages, HTML/PDF template builder, PDF/JPEG field mapper, direct-upload mode, advanced CSV Creator with dynamic fields, QR module on/off, SEO panel, student search portal, and secure verification engine.
+A comprehensive Multi-University Certificate & Marksheet Management Platform built with **Next.js 14** and **Prisma**. Features dynamic subdomains, custom landing pages, multiple template types (HTML Builder, PDF/JPEG Mapper, Direct Upload), advanced CSV management, QR verification, SEO configuration, and student search portal.
 
 ## Features
 
@@ -8,68 +8,63 @@ A comprehensive Multi-University Certificate & Marksheet Management Platform wit
 - Dynamic subdomain routing for each university
 - Isolated data and customization per institution
 - Unlimited university support
+- Custom branding per university
 
-### 🎨 Customization
-- **Custom Landing Pages**: Each university has its own branded homepage
-- **Branding**: Customizable colors, fonts, and logos
-- **SEO Panel**: Configure title, description, keywords, and OG images per university
-- **Flexible Layouts**: Drag-and-drop interface for page customization
+### 🎨 Customization & Branding
+- **Custom Landing Pages**: Each university has its own branded homepage with custom content
+- **Branding Panel**: Customizable colors, logos, headers, footers, stamps, signatures, and watermarks
+- **SEO Panel**: Configure title, description, keywords, OG images, and JSON-LD per university
+- **Flexible Configuration**: University-level settings for QR codes and other features
 
-### 📄 Template Management
-- **HTML/PDF Template Builder**: Visual drag-and-drop editor
-- **PDF/JPEG Field Mapper**: Map data fields to specific positions on templates
-- **Unlimited Templates**: Create and manage multiple certificate/marksheet templates
-- **Version Control**: Track template changes and versions
-- **Field Types**: Support for text, numbers, dates, images, and QR codes
+### 📄 Template Management (3 Types)
+1. **HTML Template Builder**: Drag-and-drop visual editor with Fabric.js/Konva.js
+2. **PDF/JPEG Field Mapper**: Upload background and map fields to specific positions
+3. **Direct Upload Mode**: Bulk upload pre-generated PDFs with CSV mapping
 
-### 📜 Certificate Generation
-- **Direct Upload Mode**: Manually create individual certificates
-- **Bulk CSV Import**: Import hundreds/thousands of certificates at once
-- **Advanced CSV Creator**: Dynamic field mapping based on templates
-- **Auto PDF Generation**: Automatically generate PDFs for all certificates
-- **QR Code Module**: Toggleable QR codes for verification (on/off per university)
-- **Batch Processing**: Track and manage bulk operations
+### 📜 Certificate & Document Management
+- **Multiple Document Support**: Certificates, marksheets, and custom documents
+- **Bulk CSV Import**: Import hundreds/thousands of students at once
+- **Advanced CSV Creator**: Dynamic CSV configuration per template
+- **Auto Document Generation**: Automatically generate PDFs for all students
+- **QR Code Module**: Toggleable QR codes for verification (university and template level)
+- **Document Publishing**: Control document visibility and publication status
 
 ### 🔍 Student Portal & Verification
-- **Search Functionality**: Search by name, roll number, or certificate number
-- **Secure Verification Engine**: Verify certificates using unique verification codes
-- **Public Verification**: Anyone can verify certificate authenticity
-- **Download Tracking**: Monitor certificate downloads
+- **Search Functionality**: Search by roll number, registration number, mobile, or date of birth
+- **Secure Verification**: Verify documents using unique QR hash codes
+- **Public Access**: Students can view and download their documents without login
+- **Print Support**: Optimized for printing documents
 
 ### 🔐 Security & Access Control
-- **Role-Based Access**: Super Admin, Admin, and Staff roles
-- **JWT Authentication**: Secure API endpoints
-- **University Isolation**: Users can only access their university's data
-- **Certificate Revocation**: Ability to revoke and track revoked certificates
-- **Rate Limiting**: Protection against abuse and DDoS attacks
-  - General API: 100 requests per 15 minutes
-  - Authentication: 5 attempts per 15 minutes (with skip on success)
-  - File Uploads: 50 per hour
-  - Certificate Generation: 100 per hour
-  - Public Verification: 1000 per 15 minutes
+- **Role-Based Access**: Super Admin and University Admin roles
+- **JWT Authentication**: Secure API endpoints with token-based auth
+- **University Isolation**: Complete data separation between universities
+- **Audit Logging**: Track all administrative actions
+- **Secure Passwords**: bcrypt hashing for all passwords
 
 ## Tech Stack
 
-### Backend
-- **Node.js & Express**: RESTful API server
-- **MongoDB & Mongoose**: Database and ODM
-- **JWT**: Authentication
-- **pdf-lib**: PDF generation and manipulation
-- **qrcode**: QR code generation
-- **csvtojson**: CSV parsing for bulk imports
+### Frontend & Backend
+- **Next.js 14**: React framework with App Router
+- **TypeScript**: Type-safe development
+- **Prisma**: Modern ORM for database operations
+- **SQLite/PostgreSQL**: Database (SQLite for dev, PostgreSQL for production)
+- **Tailwind CSS**: Utility-first CSS framework
 
-### Security
-- **helmet**: Security headers
-- **bcryptjs**: Password hashing
-- **CORS**: Cross-origin resource sharing
-- **express-rate-limit**: Rate limiting and DDoS protection
+### Libraries & Tools
+- **pdf-lib**: PDF generation and manipulation
+- **qrcode**: QR code generation for document verification
+- **fabric**: Canvas-based template editor
+- **bcryptjs**: Secure password hashing
+- **jsonwebtoken**: JWT authentication
+- **Radix UI**: Accessible UI components
 
 ## Installation
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- MongoDB (v4.4 or higher)
+- Node.js 18 or higher
 - npm or yarn
+- Git
 
 ### Setup Steps
 
@@ -90,347 +85,398 @@ A comprehensive Multi-University Certificate & Marksheet Management Platform wit
    ```
    
    Edit `.env` with your configuration:
-   ```
-   PORT=5000
-   NODE_ENV=development
-   MONGODB_URI=mongodb://localhost:27017/educertengine
-   JWT_SECRET=your_jwt_secret_here
-   JWT_EXPIRE=30d
-   BASE_DOMAIN=localhost:5000
+   ```env
+   # Database (SQLite for development, PostgreSQL for production)
+   DATABASE_URL="file:./prisma/dev.db"
+   
+   # JWT Authentication
+   JWT_SECRET="your-super-secret-jwt-key-change-this"
+   
+   # Application
+   NEXT_PUBLIC_BASE_DOMAIN="localhost:3000"
+   
+   # Storage
+   STORAGE_DRIVER="local"
+   NEXT_PUBLIC_UPLOAD_DIR="/uploads"
    ```
 
-4. **Start MongoDB**
+4. **Initialize the database**
    ```bash
-   mongod
+   # Generate Prisma Client
+   npx prisma generate
+   
+   # Run database migrations
+   npx prisma migrate dev --name init
+   
+   # (Optional) Seed with sample data
+   npx prisma db seed
    ```
 
 5. **Run the application**
    ```bash
-   # Development mode with auto-reload
+   # Development mode with hot-reload
    npm run dev
    
-   # Production mode
+   # Production build and start
+   npm run build
    npm start
    ```
 
-The server will start on `http://localhost:5000`
+The application will start on `http://localhost:3000`
 
 ## API Documentation
 
 ### Authentication Endpoints
 
-#### Register User
+#### Register Super Admin
 ```http
-POST /api/auth/register
+POST /api/auth/superadmin-register
 Content-Type: application/json
 
 {
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "password123",
-  "role": "admin",
-  "universityId": "university_id_here"
+  "name": "Admin Name",
+  "email": "admin@example.com",
+  "password": "securePassword123"
 }
 ```
 
-#### Login
+#### Super Admin Login
 ```http
-POST /api/auth/login
+POST /api/auth/superadmin-login
 Content-Type: application/json
 
 {
-  "email": "john@example.com",
+  "email": "admin@example.com",
+  "password": "securePassword123"
+}
+```
+
+#### University Admin Login
+```http
+POST /api/auth/admin-login
+Content-Type: application/json
+
+{
+  "email": "admin@university.com",
   "password": "password123"
 }
-```
-
-#### Get Current User
-```http
-GET /api/auth/me
-Authorization: Bearer <token>
 ```
 
 ### University Endpoints
 
 #### Create University (Super Admin only)
 ```http
-POST /api/universities
+POST /api/university/create
 Authorization: Bearer <token>
 Content-Type: application/json
 
 {
   "name": "Example University",
   "subdomain": "example-uni",
-  "branding": {
-    "primaryColor": "#1a73e8",
-    "secondaryColor": "#34a853"
-  },
-  "settings": {
-    "enableQRCode": true,
-    "allowBulkImport": true
-  }
+  "slug": "example-uni",
+  "primaryColor": "#1a73e8",
+  "secondaryColor": "#34a853",
+  "qrEnabled": true,
+  "seoTitle": "Example University",
+  "seoDescription": "Official certificate portal"
 }
 ```
 
 #### Get All Universities
 ```http
-GET /api/universities
+GET /api/university/list
 Authorization: Bearer <token>
-```
-
-#### Get University by Subdomain
-```http
-GET /api/universities/subdomain/:subdomain
 ```
 
 ### Template Endpoints
 
 #### Create Template
 ```http
-POST /api/templates
+POST /api/template/create
 Authorization: Bearer <token>
 Content-Type: application/json
 
 {
   "name": "Degree Certificate",
-  "type": "certificate",
-  "fields": [
-    {
-      "name": "studentName",
-      "label": "Student Name",
-      "type": "text",
-      "position": { "x": 100, "y": 200, "width": 400, "height": 30 },
-      "style": { "fontSize": 24, "fontWeight": "bold" },
-      "required": true
-    }
-  ],
-  "dimensions": {
-    "width": 792,
-    "height": 612,
-    "orientation": "landscape"
-  }
+  "type": "HTML",
+  "description": "Bachelor's degree certificate template",
+  "htmlContent": "<html>...</html>",
+  "qrEnabled": true
 }
 ```
 
 #### Get All Templates
 ```http
-GET /api/templates
+GET /api/template/list
 Authorization: Bearer <token>
 ```
 
-#### Upload Template Background
+#### Upload Template Background (for PDF_MAPPER type)
 ```http
-POST /api/templates/:id/upload-background
+POST /api/template/upload-background
 Authorization: Bearer <token>
 Content-Type: multipart/form-data
 
-background: <file>
+file: <file>
+templateId: "template_id"
 ```
 
-### Certificate Endpoints
-
-#### Create Single Certificate
+#### Upload Direct Upload ZIP
 ```http
-POST /api/certificates
+POST /api/template/direct-upload
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+file: <zip_file>
+templateId: "template_id"
+```
+
+### Student & Document Endpoints
+
+#### Create Student
+```http
+POST /api/student/create
 Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "templateId": "template_id",
-  "studentInfo": {
-    "name": "Jane Smith",
-    "rollNumber": "2024001",
-    "email": "jane@example.com"
-  },
-  "courseInfo": {
-    "courseName": "Computer Science",
-    "completionDate": "2024-05-15",
-    "grade": "A"
-  },
-  "fieldData": {
-    "studentName": "Jane Smith",
-    "courseName": "Computer Science"
-  }
+  "rollNo": "2024001",
+  "regNo": "REG2024001",
+  "name": "Jane Smith",
+  "fatherName": "John Smith",
+  "email": "jane@example.com",
+  "mobile": "+1234567890",
+  "dob": "2000-05-15"
 }
 ```
 
-#### Generate Certificate PDF
+#### Bulk Import Students from CSV
 ```http
-POST /api/certificates/:id/generate
-Authorization: Bearer <token>
-```
-
-#### Bulk Import from CSV
-```http
-POST /api/certificates/bulk-import
+POST /api/student/import
 Authorization: Bearer <token>
 Content-Type: multipart/form-data
 
-templateId: template_id
-csvFile: <file>
+file: <csv_file>
+templateId: "template_id"
 ```
 
-#### Search Certificates
+#### Search Students
 ```http
-GET /api/certificates/search?query=Jane&universityId=uni_id
+GET /api/student/search?rollNo=2024001
+GET /api/student/search?mobile=1234567890
 ```
 
-#### Verify Certificate
+#### Verify Document
 ```http
-GET /api/certificates/verify/:verificationCode
+GET /api/verify/:hash
 ```
 
-## CSV Import Format
+Returns document details if hash is valid.
 
-For bulk certificate import, prepare a CSV file with the following structure:
+### CSV Configuration Endpoints
 
-```csv
-studentName,rollNumber,email,courseName,completionDate,grade
-Jane Smith,2024001,jane@example.com,Computer Science,2024-05-15,A
-John Doe,2024002,john@example.com,Mathematics,2024-05-15,B+
-```
+#### Create CSV Configuration
+```http
+POST /api/csv/create
+Authorization: Bearer <token>
+Content-Type: application/json
 
-The CSV fields should match the template fields defined in your certificate template.
-
-## Directory Structure
-
-```
-EduCertEngine/
-├── src/
-│   ├── config/           # Configuration files
-│   │   └── database.js   # Database connection
-│   ├── models/           # Mongoose models
-│   │   ├── University.js
-│   │   ├── User.js
-│   │   ├── Template.js
-│   │   └── Certificate.js
-│   ├── controllers/      # Request handlers
-│   │   ├── authController.js
-│   │   ├── universityController.js
-│   │   ├── templateController.js
-│   │   └── certificateController.js
-│   ├── routes/           # API routes
-│   │   ├── auth.js
-│   │   ├── universities.js
-│   │   ├── templates.js
-│   │   └── certificates.js
-│   ├── middleware/       # Custom middleware
-│   │   ├── auth.js
-│   │   └── subdomain.js
-│   └── utils/            # Utility functions
-│       ├── qrGenerator.js
-│       ├── pdfGenerator.js
-│       └── csvParser.js
-├── public/               # Static files
-│   ├── uploads/          # User uploads
-│   ├── certificates/     # Generated certificates
-│   └── templates/        # Template files
-├── server.js             # Application entry point
-├── package.json
-├── .env.example
-├── .gitignore
-└── README.md
-```
-
-## Usage Examples
-
-### 1. Setting Up a University
-
-```javascript
-// Create a new university
-POST /api/universities
 {
-  "name": "Tech University",
-  "subdomain": "tech-uni",
-  "branding": {
-    "primaryColor": "#0066cc",
-    "secondaryColor": "#ff9900"
-  },
-  "landingPage": {
-    "heroTitle": "Welcome to Tech University",
-    "heroSubtitle": "Excellence in Education"
-  },
-  "seo": {
-    "title": "Tech University - Certificates",
-    "description": "Official certificate portal"
-  },
-  "settings": {
-    "enableQRCode": true,
-    "allowDirectUpload": true,
-    "allowBulkImport": true
-  }
-}
-```
-
-### 2. Creating a Certificate Template
-
-```javascript
-// Create a template with fields
-POST /api/templates
-{
-  "name": "Graduation Certificate",
-  "type": "certificate",
+  "name": "Student CSV Config",
+  "templateId": "template_id",
   "fields": [
     {
-      "name": "studentName",
-      "label": "Student Name",
+      "name": "rollNo",
+      "label": "Roll Number",
       "type": "text",
-      "position": { "x": 100, "y": 150 },
-      "style": { "fontSize": 28, "fontWeight": "bold" },
       "required": true
     },
     {
-      "name": "degree",
-      "label": "Degree",
+      "name": "name",
+      "label": "Student Name",
       "type": "text",
-      "position": { "x": 100, "y": 200 },
-      "style": { "fontSize": 20 }
-    },
-    {
-      "name": "qrCode",
-      "type": "qrcode",
-      "position": { "x": 650, "y": 450, "width": 100, "height": 100 }
+      "required": true
     }
   ]
 }
 ```
 
-### 3. Bulk Certificate Generation
+## CSV Import Format
+
+For bulk student import, prepare a CSV file with the following structure:
+
+```csv
+rollNo,regNo,name,fatherName,dob,email,mobile
+2024001,REG001,Jane Smith,John Smith,2000-05-15,jane@example.com,1234567890
+2024002,REG002,John Doe,Robert Doe,2000-06-20,john@example.com,0987654321
+```
+
+The CSV fields should match your template requirements. Configure CSV structure using the CSV Creator in the admin panel.
+
+## Directory Structure
+
+```
+EduCertEngine/
+├── app/                      # Next.js App Router
+│   ├── admin/               # University admin pages
+│   │   ├── dashboard/       # Admin dashboard
+│   │   ├── templates/       # Template management
+│   │   ├── students/        # Student management
+│   │   ├── branding/        # Branding settings
+│   │   ├── landing-builder/ # Landing page editor
+│   │   ├── csv-creator/     # CSV configuration
+│   │   ├── seo/            # SEO settings
+│   │   └── settings/        # General settings
+│   ├── superadmin/          # Super admin pages
+│   │   ├── dashboard/       # System dashboard
+│   │   ├── register/        # Super admin registration
+│   │   └── login/           # Super admin login
+│   ├── api/                 # API routes
+│   │   ├── auth/           # Authentication endpoints
+│   │   ├── university/      # University management
+│   │   ├── template/        # Template operations
+│   │   ├── student/         # Student operations
+│   │   ├── csv/            # CSV configuration
+│   │   └── verify/          # Document verification
+│   ├── verify/              # Public verification pages
+│   └── result/              # Student result pages
+├── components/              # React components
+│   └── ui/                 # UI components
+├── lib/                     # Utility libraries
+│   ├── prisma.ts           # Prisma client
+│   ├── auth.ts             # Authentication utilities
+│   ├── pdf.ts              # PDF generation
+│   ├── qr.ts               # QR code generation
+│   ├── tenant.ts           # Multi-tenancy utilities
+│   └── utils.ts            # General utilities
+├── prisma/                  # Prisma ORM
+│   ├── schema.prisma       # Database schema
+│   └── dev.db              # SQLite database (dev)
+├── public/                  # Static files
+│   └── uploads/            # User uploads
+├── next.config.js          # Next.js configuration
+├── tailwind.config.js      # Tailwind CSS config
+├── tsconfig.json           # TypeScript config
+└── package.json            # Dependencies
+```
+
+## Usage Examples
+
+### 1. Setting Up a University (Super Admin)
 
 ```javascript
-// Upload CSV file
-POST /api/certificates/bulk-import
+// Create a new university via API
+POST /api/university/create
+{
+  "name": "Tech University",
+  "subdomain": "techuni",
+  "slug": "tech-university",
+  "primaryColor": "#0066cc",
+  "secondaryColor": "#ff9900",
+  "qrEnabled": true,
+  "seoTitle": "Tech University - Certificates",
+  "seoDescription": "Official certificate portal for Tech University"
+}
+```
+
+### 2. Creating a Template (University Admin)
+
+```javascript
+// Create an HTML template
+POST /api/template/create
+{
+  "name": "Graduation Certificate",
+  "type": "HTML",
+  "description": "Bachelor's degree certificate",
+  "htmlContent": "<html>...</html>",
+  "htmlConfig": "{...fabric.js config...}",
+  "qrEnabled": true,
+  "qrPosition": "{\"x\": 650, \"y\": 450}"
+}
+```
+
+### 3. Bulk Student Import
+
+```javascript
+// Upload CSV file with students
+POST /api/student/import
 FormData: {
-  templateId: "template_123",
-  csvFile: certificates.csv
+  file: students.csv,
+  templateId: "template_123"
 }
 
-// Response includes batch ID for tracking
+// Response includes import status
 {
   "success": true,
-  "message": "Successfully imported 150 certificates",
-  "batchId": "BATCH-1234567890"
+  "imported": 150,
+  "failed": 0
+}
+```
+
+### 4. Student Document Verification
+
+```javascript
+// Verify document by QR hash
+GET /api/verify/abc123def456
+
+// Returns document details
+{
+  "valid": true,
+  "student": {
+    "name": "Jane Smith",
+    "rollNo": "2024001"
+  },
+  "document": {
+    "title": "Bachelor's Degree",
+    "issuedDate": "2024-05-15"
+  }
 }
 ```
 
 ## Features in Detail
 
-### QR Code Integration
-- Each certificate can include a QR code for quick verification
-- QR codes link to verification page with certificate details
-- Toggleable at university level and template level
+### Template Types
 
-### Multi-Tenancy
-- Each university operates on its own subdomain (e.g., `tech-uni.educert.com`)
+#### 1. HTML Template Builder
+- Visual drag-and-drop editor using Fabric.js
+- Custom HTML/CSS support
+- Dynamic field mapping
+- Live preview capability
+- Export to PDF
+
+#### 2. PDF/JPEG Field Mapper
+- Upload existing certificate design (PDF or JPEG)
+- Map form fields to specific positions
+- Visual field positioning
+- Supports all standard form field types
+
+#### 3. Direct Upload Mode
+- Bulk upload pre-generated PDFs
+- CSV-based filename mapping
+- Ideal for pre-designed certificates
+- Quick deployment
+
+### QR Code Integration
+- Unique hash for each document
+- University-level toggle (enable/disable for all)
+- Template-level control (per template)
+- Secure verification endpoint
+- Public access for verification
+
+### Multi-Tenancy Architecture
+- Each university operates on its own subdomain (e.g., `techuni.educert.com`)
 - Complete data isolation between universities
-- Custom branding and landing pages per subdomain
+- Custom branding per university
+- Independent configuration per tenant
+- Centralized super admin management
 
 ### Security Features
 - JWT-based authentication
-- Role-based access control (Super Admin, Admin, Staff)
+- Role-based access control (Super Admin, University Admin)
 - Secure password hashing with bcrypt
-- Certificate revocation system
-- Verification code validation
+- Database-level data isolation
+- Audit logging for all actions
+- Secure file upload validation
 
 ## Development
 
@@ -439,31 +485,69 @@ FormData: {
 npm run dev
 ```
 
-This starts the server with nodemon for auto-reloading on code changes.
+This starts the Next.js development server with hot-reload on `http://localhost:3000`.
 
-### Testing
+### Building for Production
 ```bash
-npm test
+npm run build
+npm start
+```
+
+### Database Management
+```bash
+# Generate Prisma Client after schema changes
+npx prisma generate
+
+# Create and apply migrations
+npx prisma migrate dev --name migration_name
+
+# Push schema changes without migrations
+npx prisma db push
+
+# Open Prisma Studio (Database GUI)
+npx prisma studio
+```
+
+### Linting
+```bash
+npm run lint
 ```
 
 ## Deployment
 
 ### Environment Variables for Production
-```
-NODE_ENV=production
-PORT=5000
-MONGODB_URI=mongodb://your-production-db
-JWT_SECRET=your-production-secret
-BASE_DOMAIN=your-domain.com
+```env
+DATABASE_URL="postgresql://user:password@host:5432/dbname"
+JWT_SECRET="your-super-secure-production-secret-min-32-chars"
+NEXT_PUBLIC_BASE_DOMAIN="yourdomain.com"
+STORAGE_DRIVER="s3"  # or "local"
+NODE_ENV="production"
 ```
 
 ### Recommended Production Setup
-- Use MongoDB Atlas or similar managed database
-- Deploy on platforms like Heroku, AWS, or DigitalOcean
-- Set up SSL/TLS certificates for HTTPS
-- Configure proper subdomain routing in DNS
-- Use environment variables for sensitive data
-- Enable logging and monitoring
+- **Platform**: Vercel, Netlify, or any Node.js host
+- **Database**: PostgreSQL (recommended) via Supabase, Railway, or Neon
+- **File Storage**: AWS S3, Cloudflare R2, or similar
+- **Domain**: Configure wildcard DNS for subdomains (*.yourdomain.com)
+- **SSL/TLS**: Automatic with Vercel/Netlify, or use Let's Encrypt
+
+### Deploying to Vercel
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy
+vercel
+
+# Set environment variables in Vercel dashboard
+# Configure domain and wildcard subdomain support
+```
+
+### Database Migration in Production
+```bash
+# Run migrations
+npx prisma migrate deploy
+```
 
 ## Contributing
 
@@ -483,52 +567,71 @@ This project is licensed under the MIT License.
 
 For support, please open an issue in the GitHub repository or contact the maintainers.
 
-## ✅ Recently Implemented Features
+## ✅ Implemented Features
 
-### Backend APIs (100% Complete)
-- ✅ File upload system with validation
-- ✅ Document download with tracking
-- ✅ Batch certificate generation
-- ✅ Template builder utilities (HTML validation, Fabric.js conversion)
-- ✅ Analytics system (university, system, template)
-- ✅ Email notification infrastructure
-- ✅ Document versioning system
-- ✅ Advanced search with filters
-- ✅ Bulk operations
-- ✅ CSV export functionality
+### Core Platform (100% Complete)
+- ✅ Multi-tenant architecture with subdomain routing
+- ✅ Super Admin and University Admin roles
+- ✅ JWT-based authentication system
+- ✅ Prisma ORM with SQLite/PostgreSQL support
+- ✅ Next.js 14 with App Router
 
-### New API Endpoints (25+)
-See `API_ENDPOINTS.md` for complete documentation:
-- File upload and management
-- Advanced search and filtering
-- Analytics and reporting
-- Template building tools
-- Batch operations
-- Document versioning
+### Template System (100% Complete)
+- ✅ HTML Template Builder with Fabric.js
+- ✅ PDF/JPEG Field Mapper
+- ✅ Direct Upload Mode
+- ✅ Template management UI
+- ✅ QR code integration (toggle on/off)
+
+### Student & Document Management (100% Complete)
+- ✅ Student registration and management
+- ✅ Bulk CSV import
+- ✅ Advanced CSV Creator with dynamic fields
+- ✅ Document generation and publishing
+- ✅ Search and verification portal
+- ✅ QR-based document verification
+
+### Customization (100% Complete)
+- ✅ Branding panel (colors, logos, images)
+- ✅ Landing page builder
+- ✅ SEO configuration panel
+- ✅ Custom subdomain per university
+- ✅ File upload management
+
+### Admin Panels (100% Complete)
+- ✅ Super Admin Dashboard
+- ✅ University Admin Dashboard
+- ✅ Template management interface
+- ✅ Student management interface
+- ✅ Settings and configuration panels
 
 ## Roadmap
 
-### Completed ✅
-- ✅ Email notification system (infrastructure ready)
-- ✅ Advanced analytics dashboard (API ready)
-- ✅ Real-time certificate preview (API ready)
-- ✅ Batch operations
-- ✅ Advanced search and filtering
-- ✅ Document versioning
-
 ### Future Enhancements
-- [ ] Frontend React application with drag-and-drop template builder
-- [ ] Email provider integration (SendGrid/SES/SMTP)
-- [ ] Blockchain-based verification
-- [ ] Mobile app for certificate viewing
-- [ ] Multi-language support
+- [ ] Mobile-responsive template editor
+- [ ] Email notifications (SMTP integration)
+- [ ] Advanced analytics dashboard
+- [ ] Batch document operations
+- [ ] Multi-language support (i18n)
+- [ ] Dark mode UI
 - [ ] Export to multiple formats (PNG, JPEG, SVG)
-- [ ] Background job processing with Bull/BullMQ
-- [ ] Redis caching layer
+- [ ] API rate limiting
+- [ ] Blockchain-based verification (optional)
+- [ ] Mobile app for certificate viewing
 
 ## Acknowledgments
 
-- Built with Node.js and Express
-- Uses pdf-lib for PDF generation
+- Built with Next.js 14 and React
+- Database powered by Prisma ORM
+- PDF generation with pdf-lib
 - QR codes powered by qrcode library
-- Database powered by MongoDB
+- UI components from Radix UI and Tailwind CSS
+
+---
+
+For more detailed documentation, see:
+- [SETUP.md](./SETUP.md) - Detailed setup instructions
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture details
+- [API_ENDPOINTS.md](./API_ENDPOINTS.md) - Complete API reference
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Production deployment guide
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - Contribution guidelines
