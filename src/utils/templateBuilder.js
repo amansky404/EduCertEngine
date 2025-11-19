@@ -4,7 +4,7 @@
  */
 
 /**
- * Merge template variables with data
+ * Merge template variables with data (supports nested and conditional)
  * @param {String} htmlContent - HTML template content with {{variables}}
  * @param {Object} data - Data object to merge
  * @returns {String} - HTML with variables replaced
@@ -12,11 +12,23 @@
 exports.mergeTemplateVariables = (htmlContent, data) => {
   let result = htmlContent;
   
-  // Replace {{variable}} with data values
+  // Replace {{variable}} with data values (supports dot notation)
   for (const [key, value] of Object.entries(data)) {
     const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
     result = result.replace(regex, value || '');
   }
+  
+  // Handle nested variables (e.g., {{student.name}})
+  const nestedRegex = /{{([^}]+)}}/g;
+  result = result.replace(nestedRegex, (match, path) => {
+    const keys = path.trim().split('.');
+    let value = data;
+    for (const key of keys) {
+      value = value?.[key];
+      if (value === undefined) return '';
+    }
+    return value || '';
+  });
   
   // Clean up any remaining unmatched variables
   result = result.replace(/{{[^}]+}}/g, '');
@@ -25,7 +37,53 @@ exports.mergeTemplateVariables = (htmlContent, data) => {
 };
 
 /**
- * Extract variables from HTML template
+ * Merge template with conditional logic and loops
+ * @param {String} htmlContent - HTML template content
+ * @param {Object} data - Data object to merge
+ * @returns {String} - HTML with conditionals and loops processed
+ */
+exports.mergeTemplateAdvanced = (htmlContent, data) => {
+  let result = htmlContent;
+  
+  // Process loops: {{#each items}}...{{/each}}
+  const loopRegex = /{{#each\s+(\w+)}}([\s\S]*?){{\/each}}/g;
+  result = result.replace(loopRegex, (match, arrayName, content) => {
+    const array = data[arrayName];
+    if (!Array.isArray(array)) return '';
+    
+    return array.map((item, index) => {
+      let itemContent = content;
+      // Replace {{this}} with current item
+      itemContent = itemContent.replace(/{{this}}/g, item);
+      // Replace {{@index}} with current index
+      itemContent = itemContent.replace(/{{@index}}/g, index);
+      // Replace {{item.property}} with item properties
+      for (const [key, value] of Object.entries(item)) {
+        const regex = new RegExp(`{{this\\.${key}}}`, 'g');
+        itemContent = itemContent.replace(regex, value || '');
+      }
+      return itemContent;
+    }).join('');
+  });
+  
+  // Process conditionals: {{#if condition}}...{{/if}}
+  const ifRegex = /{{#if\s+(\w+)}}([\s\S]*?){{\/if}}/g;
+  result = result.replace(ifRegex, (match, varName, content) => {
+    return data[varName] ? content : '';
+  });
+  
+  // Process if-else: {{#if condition}}...{{else}}...{{/if}}
+  const ifElseRegex = /{{#if\s+(\w+)}}([\s\S]*?){{else}}([\s\S]*?){{\/if}}/g;
+  result = result.replace(ifElseRegex, (match, varName, ifContent, elseContent) => {
+    return data[varName] ? ifContent : elseContent;
+  });
+  
+  // Finally, merge simple variables
+  return exports.mergeTemplateVariables(result, data);
+};
+
+/**
+ * Extract variables from HTML template (including nested)
  * @param {String} htmlContent - HTML template content
  * @returns {Array<String>} - Array of variable names
  */
@@ -35,7 +93,11 @@ exports.extractTemplateVariables = (htmlContent) => {
   let match;
   
   while ((match = regex.exec(htmlContent)) !== null) {
-    variables.add(match[1].trim());
+    const varName = match[1].trim();
+    // Skip control structures
+    if (!varName.startsWith('#') && !varName.startsWith('/') && varName !== 'else') {
+      variables.add(varName);
+    }
   }
   
   return Array.from(variables);
@@ -76,7 +138,7 @@ exports.validateTemplateHTML = (htmlContent) => {
 };
 
 /**
- * Generate field mapping configuration for PDF mapper
+ * Generate field mapping configuration for PDF mapper (enhanced)
  * @param {Array} fields - Array of field definitions
  * @returns {Object} - Mapping configuration
  */
@@ -85,7 +147,8 @@ exports.generateFieldMapping = (fields) => {
     fields: [],
     metadata: {
       createdAt: new Date(),
-      version: '1.0',
+      version: '2.0',
+      features: ['conditionals', 'validation', 'computed'],
     },
   };
   
@@ -107,7 +170,18 @@ exports.generateFieldMapping = (fields) => {
         color: field.color || '#000000',
         align: field.align || 'left',
       },
-      required: field.required || false,
+      validation: {
+        required: field.required || false,
+        minLength: field.minLength,
+        maxLength: field.maxLength,
+        pattern: field.pattern,
+      },
+      conditional: {
+        show: field.showIf,
+        hide: field.hideIf,
+      },
+      computed: field.computed || false,
+      computeExpression: field.computeExpression,
       defaultValue: field.defaultValue || '',
     });
   });
@@ -116,21 +190,22 @@ exports.generateFieldMapping = (fields) => {
 };
 
 /**
- * Validate field mapping configuration
+ * Validate field mapping configuration (enhanced)
  * @param {Object} mappingConfig - Mapping configuration to validate
  * @returns {Object} - Validation result
  */
 exports.validateFieldMapping = (mappingConfig) => {
   const errors = [];
+  const warnings = [];
   
   if (!mappingConfig || typeof mappingConfig !== 'object') {
     errors.push('Invalid mapping configuration');
-    return { isValid: false, errors };
+    return { isValid: false, errors, warnings };
   }
   
   if (!Array.isArray(mappingConfig.fields)) {
     errors.push('Fields must be an array');
-    return { isValid: false, errors };
+    return { isValid: false, errors, warnings };
   }
   
   // Validate each field
@@ -148,11 +223,23 @@ exports.validateFieldMapping = (mappingConfig) => {
         errors.push(`Field '${field.name}' has invalid position coordinates`);
       }
     }
+    
+    // Validate field type
+    const validTypes = ['text', 'image', 'qr', 'date', 'number', 'checkbox', 'dropdown'];
+    if (field.type && !validTypes.includes(field.type)) {
+      warnings.push(`Field '${field.name}' has unknown type '${field.type}'`);
+    }
+    
+    // Validate computed fields
+    if (field.computed && !field.computeExpression) {
+      warnings.push(`Computed field '${field.name}' is missing computeExpression`);
+    }
   });
   
   return {
     isValid: errors.length === 0,
     errors,
+    warnings,
   };
 };
 
@@ -258,7 +345,7 @@ exports.generateTemplateCSS = (branding) => {
 };
 
 /**
- * Convert Fabric.js config to PDF-lib compatible format
+ * Convert Fabric.js config to PDF-lib compatible format (enhanced)
  * @param {Object} fabricConfig - Fabric.js canvas configuration
  * @returns {Object} - PDF-lib compatible configuration
  */
@@ -270,7 +357,7 @@ exports.fabricToPDFConfig = (fabricConfig) => {
   const fields = [];
   
   fabricConfig.objects.forEach(obj => {
-    if (obj.type === 'text' || obj.type === 'textbox') {
+    if (obj.type === 'text' || obj.type === 'textbox' || obj.type === 'i-text') {
       fields.push({
         name: obj.name || `field_${fields.length}`,
         type: 'text',
@@ -288,6 +375,8 @@ exports.fabricToPDFConfig = (fabricConfig) => {
           align: obj.textAlign || 'left',
         },
         defaultValue: obj.text || '',
+        rotation: obj.angle || 0,
+        opacity: obj.opacity !== undefined ? obj.opacity : 1,
       });
     } else if (obj.type === 'image') {
       fields.push({
@@ -299,9 +388,119 @@ exports.fabricToPDFConfig = (fabricConfig) => {
           width: obj.width || 100,
           height: obj.height || 100,
         },
+        rotation: obj.angle || 0,
+        opacity: obj.opacity !== undefined ? obj.opacity : 1,
+      });
+    } else if (obj.type === 'rect') {
+      fields.push({
+        name: obj.name || `rect_${fields.length}`,
+        type: 'shape',
+        shape: 'rectangle',
+        position: {
+          x: obj.left || 0,
+          y: obj.top || 0,
+          width: obj.width || 100,
+          height: obj.height || 100,
+        },
+        style: {
+          fill: obj.fill || 'transparent',
+          stroke: obj.stroke || '#000000',
+          strokeWidth: obj.strokeWidth || 1,
+        },
+        rotation: obj.angle || 0,
+        opacity: obj.opacity !== undefined ? obj.opacity : 1,
+      });
+    } else if (obj.type === 'circle') {
+      fields.push({
+        name: obj.name || `circle_${fields.length}`,
+        type: 'shape',
+        shape: 'circle',
+        position: {
+          x: obj.left || 0,
+          y: obj.top || 0,
+          radius: obj.radius || 50,
+        },
+        style: {
+          fill: obj.fill || 'transparent',
+          stroke: obj.stroke || '#000000',
+          strokeWidth: obj.strokeWidth || 1,
+        },
+        rotation: obj.angle || 0,
+        opacity: obj.opacity !== undefined ? obj.opacity : 1,
+      });
+    } else if (obj.type === 'line') {
+      fields.push({
+        name: obj.name || `line_${fields.length}`,
+        type: 'shape',
+        shape: 'line',
+        position: {
+          x1: obj.x1 || 0,
+          y1: obj.y1 || 0,
+          x2: obj.x2 || 100,
+          y2: obj.y2 || 100,
+        },
+        style: {
+          stroke: obj.stroke || '#000000',
+          strokeWidth: obj.strokeWidth || 1,
+        },
       });
     }
   });
   
   return { fields };
+};
+
+/**
+ * Calculate field value from expression
+ * @param {String} expression - Compute expression
+ * @param {Object} data - Data context
+ * @returns {Any} - Computed value
+ */
+exports.computeFieldValue = (expression, data) => {
+  try {
+    // Simple expression evaluation (can be extended)
+    // Supports basic arithmetic and string concatenation
+    let result = expression;
+    
+    // Replace variables with values
+    for (const [key, value] of Object.entries(data)) {
+      const regex = new RegExp(`\\b${key}\\b`, 'g');
+      if (typeof value === 'string') {
+        result = result.replace(regex, `"${value}"`);
+      } else {
+        result = result.replace(regex, value);
+      }
+    }
+    
+    // Evaluate the expression (use with caution in production)
+    // In production, use a safe expression evaluator
+    return eval(result);
+  } catch (error) {
+    console.error('Error computing field value:', error);
+    return '';
+  }
+};
+
+/**
+ * Apply conditional visibility
+ * @param {Object} field - Field configuration
+ * @param {Object} data - Data context
+ * @returns {Boolean} - Whether field should be visible
+ */
+exports.shouldShowField = (field, data) => {
+  if (!field.conditional) return true;
+  
+  // Check show condition
+  if (field.conditional.show) {
+    const showVar = field.conditional.show;
+    return !!data[showVar];
+  }
+  
+  // Check hide condition
+  if (field.conditional.hide) {
+    const hideVar = field.conditional.hide;
+    return !data[hideVar];
+  }
+  
+  return true;
 };
