@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { HtmlEditor } from "@/components/HtmlEditor"
 
 interface Section {
   id: string
@@ -369,6 +370,15 @@ export default function LandingBuilderPage() {
             />
           </div>
         )
+      case "custom":
+        return (
+          <div className="p-8 bg-white">
+            <div 
+              className="prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: section.config.html || "<p>Custom HTML content will appear here...</p>" }}
+            />
+          </div>
+        )
       default:
         return (
           <div className="p-8 bg-gray-100 border-2 border-dashed border-gray-300">
@@ -547,13 +557,14 @@ export default function LandingBuilderPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Content (HTML supported)</Label>
-              <Textarea
-                value={section.config.content}
-                onChange={(e) => updateSection(section.id, {
-                  config: { ...section.config, content: e.target.value }
+              <Label>Content (Rich Text Editor)</Label>
+              <HtmlEditor
+                value={section.config.content || ""}
+                onChange={(value) => updateSection(section.id, {
+                  config: { ...section.config, content: value }
                 })}
-                rows={6}
+                placeholder="Write your content here..."
+                height={400}
               />
             </div>
             <div className="space-y-2">
@@ -570,6 +581,29 @@ export default function LandingBuilderPage() {
                 <option value="right">Right</option>
                 <option value="justify">Justify</option>
               </select>
+            </div>
+          </div>
+        )
+      case "custom":
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Custom HTML Content</Label>
+              <HtmlEditor
+                value={section.config.html || ""}
+                onChange={(value) => updateSection(section.id, {
+                  config: { ...section.config, html: value }
+                })}
+                placeholder="Add your custom HTML content..."
+                height={500}
+              />
+            </div>
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
+              <p className="font-medium text-yellow-800">💡 Tip:</p>
+              <p className="text-yellow-700">
+                Use this section to add any custom HTML content. The editor provides rich text formatting,
+                but you can also view and edit the raw HTML by toggling to source view.
+              </p>
             </div>
           </div>
         )
