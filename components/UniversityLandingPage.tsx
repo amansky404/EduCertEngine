@@ -34,7 +34,7 @@ export default async function UniversityLandingPage({ subdomain }: UniversityLan
           <CardHeader>
             <CardTitle>University Not Found</CardTitle>
             <CardDescription>
-              The university you're looking for doesn't exist or is not active.
+              The university you&apos;re looking for doesn&apos;t exist or is not active.
             </CardDescription>
           </CardHeader>
           <CardContent>
