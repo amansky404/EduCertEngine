@@ -43,6 +43,8 @@ export default function HtmlBuilderPage() {
         height: canvasHeight,
         backgroundColor: "#ffffff",
         preserveObjectStacking: true,
+        renderOnAddRemove: true,
+        selection: true,
       })
 
       // Improve selection handling
@@ -134,9 +136,16 @@ export default function HtmlBuilderPage() {
               evented: true,
               hasControls: true,
               hasBorders: true,
+              visible: true, // Explicitly ensure visibility
+              opacity: 1, // Ensure full opacity
             })
           })
-          canvas.renderAll()
+          // Request animation frame to ensure proper rendering
+          requestAnimationFrame(() => {
+            canvas.renderAll()
+            // Force a second render to ensure visibility
+            setTimeout(() => canvas.renderAll(), 100)
+          })
           // Save initial state for undo/redo
           saveState()
         })
@@ -252,6 +261,8 @@ export default function HtmlBuilderPage() {
       hasControls: true,
       hasBorders: true,
       lockScalingFlip: true,
+      visible: true,
+      opacity: 1,
     })
 
     canvas.add(text)
@@ -275,6 +286,8 @@ export default function HtmlBuilderPage() {
       hasControls: true,
       hasBorders: true,
       lockScalingFlip: true,
+      visible: true,
+      opacity: 1,
     })
 
     canvas.add(text)
@@ -313,6 +326,8 @@ export default function HtmlBuilderPage() {
       hasControls: true,
       hasBorders: true,
       lockScalingFlip: true,
+      visible: true,
+      opacity: 1,
     })
 
     canvas.add(rect)
@@ -336,6 +351,8 @@ export default function HtmlBuilderPage() {
       hasControls: true,
       hasBorders: true,
       lockScalingFlip: true,
+      visible: true,
+      opacity: 1,
     })
 
     canvas.add(circle)
@@ -357,6 +374,8 @@ export default function HtmlBuilderPage() {
       hasControls: true,
       hasBorders: true,
       lockScalingFlip: true,
+      visible: true,
+      opacity: 1,
     })
 
     canvas.add(line)
@@ -384,6 +403,8 @@ export default function HtmlBuilderPage() {
             hasControls: true,
             hasBorders: true,
             lockScalingFlip: true,
+            visible: true,
+            opacity: 1,
           })
           image.scaleToWidth(200)
           image.set({ left: 100, top: 100 })
@@ -426,6 +447,8 @@ export default function HtmlBuilderPage() {
       hasControls: true,
       hasBorders: true,
       lockScalingFlip: true,
+      visible: true,
+      opacity: 1,
     })
 
     canvas.add(group)
