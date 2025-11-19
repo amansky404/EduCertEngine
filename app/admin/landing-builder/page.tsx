@@ -606,9 +606,9 @@ export default function LandingBuilderPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-12 gap-6">
+        <div className="flex gap-6 h-[calc(100vh-180px)]">
           {/* Left Sidebar - Section Management */}
-          <div className="lg:col-span-3 space-y-4">
+          <div className="w-72 flex-shrink-0 overflow-y-auto space-y-4 pr-2" style={{ scrollbarWidth: 'thin' }}>
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Add Section</CardTitle>
@@ -721,8 +721,8 @@ export default function LandingBuilderPage() {
           </div>
 
           {/* Center - Section Editor */}
-          <div className="lg:col-span-5">
-            <Card>
+          <div className="flex-1 min-w-0 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+            <Card className="h-full">
               <CardHeader>
                 <CardTitle>
                   {selectedSection ? `Edit: ${selectedSection.name}` : "Select a Section"}
@@ -758,8 +758,8 @@ export default function LandingBuilderPage() {
           </div>
 
           {/* Right Sidebar - Live Preview */}
-          <div className="lg:col-span-4">
-            <Card className="sticky top-4">
+          <div className="w-96 flex-shrink-0 overflow-y-auto pl-2" style={{ scrollbarWidth: 'thin' }}>
+            <Card className="h-full">
               <CardHeader>
                 <CardTitle>Live Preview</CardTitle>
                 <CardDescription>
@@ -767,7 +767,7 @@ export default function LandingBuilderPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="border rounded-lg overflow-hidden bg-white max-h-[calc(100vh-200px)] overflow-y-auto">
+                <div className="border rounded-lg overflow-hidden bg-white overflow-y-auto">
                   {sections.length === 0 ? (
                     <div className="p-12 text-center text-gray-600">
                       <p>No sections added yet</p>

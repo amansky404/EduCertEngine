@@ -30,11 +30,15 @@ export default function HtmlBuilderPage() {
     fetchTemplate()
   }, [templateId])
 
+  // Canvas dimensions state
+  const [canvasWidth, setCanvasWidth] = useState(1200)
+  const [canvasHeight, setCanvasHeight] = useState(900)
+
   useEffect(() => {
     if (canvasRef.current && !canvas) {
       const fabricCanvas = new fabric.Canvas(canvasRef.current, {
-        width: 800,
-        height: 600,
+        width: canvasWidth,
+        height: canvasHeight,
         backgroundColor: "#ffffff",
         preserveObjectStacking: true,
       })
@@ -65,7 +69,7 @@ export default function HtmlBuilderPage() {
 
       setCanvas(fabricCanvas)
     }
-  }, [canvasRef, canvas])
+  }, [canvasRef, canvas, canvasWidth, canvasHeight])
 
   const fetchTemplate = async () => {
     try {
@@ -117,6 +121,9 @@ export default function HtmlBuilderPage() {
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [canvasScale, setCanvasScale] = useState(1)
   const [layers, setLayers] = useState<fabric.Object[]>([])
+  const [showRulers, setShowRulers] = useState(true)
+  const [showGrid, setShowGrid] = useState(false)
+  const [gridSize, setGridSize] = useState(20)
 
   // Update layers when canvas objects change
   useEffect(() => {
@@ -333,14 +340,14 @@ export default function HtmlBuilderPage() {
 
   const alignRight = () => {
     if (!canvas || !selectedObject) return
-    selectedObject.set({ left: (canvas.width || 800) - (selectedObject.width || 0) * (selectedObject.scaleX || 1) })
+    selectedObject.set({ left: canvasWidth - (selectedObject.width || 0) * (selectedObject.scaleX || 1) })
     canvas.renderAll()
     saveState()
   }
 
   const alignCenter = () => {
     if (!canvas || !selectedObject) return
-    selectedObject.set({ left: ((canvas.width || 800) - (selectedObject.width || 0) * (selectedObject.scaleX || 1)) / 2 })
+    selectedObject.set({ left: (canvasWidth - (selectedObject.width || 0) * (selectedObject.scaleX || 1)) / 2 })
     canvas.renderAll()
     saveState()
   }
@@ -354,14 +361,14 @@ export default function HtmlBuilderPage() {
 
   const alignMiddle = () => {
     if (!canvas || !selectedObject) return
-    selectedObject.set({ top: ((canvas.height || 600) - (selectedObject.height || 0) * (selectedObject.scaleY || 1)) / 2 })
+    selectedObject.set({ top: (canvasHeight - (selectedObject.height || 0) * (selectedObject.scaleY || 1)) / 2 })
     canvas.renderAll()
     saveState()
   }
 
   const alignBottom = () => {
     if (!canvas || !selectedObject) return
-    selectedObject.set({ top: (canvas.height || 600) - (selectedObject.height || 0) * (selectedObject.scaleY || 1) })
+    selectedObject.set({ top: canvasHeight - (selectedObject.height || 0) * (selectedObject.scaleY || 1) })
     canvas.renderAll()
     saveState()
   }
@@ -509,6 +516,21 @@ export default function HtmlBuilderPage() {
     }
   }
 
+  const resizeCanvas = (width: number, height: number) => {
+    if (!canvas) return
+    setCanvasWidth(width)
+    setCanvasHeight(height)
+    canvas.setDimensions({ width, height })
+    canvas.renderAll()
+  }
+
+  const toggleGrid = () => {
+    setShowGrid(!showGrid)
+    if (canvas) {
+      canvas.renderAll()
+    }
+  }
+
   const saveTemplate = async () => {
     if (!canvas) return
 
@@ -597,9 +619,10 @@ export default function HtmlBuilderPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-12 gap-4">
+        <div className="flex gap-4 h-[calc(100vh-140px)]">
           {/* Left Sidebar - Tools */}
-          <div className="col-span-3 space-y-4">
+          <div className="w-64 flex-shrink-0 overflow-y-auto space-y-4 pr-2"
+            style={{ scrollbarWidth: 'thin' }}>
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Elements</CardTitle>
@@ -786,6 +809,59 @@ export default function HtmlBuilderPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="space-y-2">
+                  <Label>Canvas Size</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Width</Label>
+                      <Input
+                        type="number"
+                        value={canvasWidth}
+                        onChange={(e) => resizeCanvas(Number(e.target.value), canvasHeight)}
+                        min="400"
+                        max="3000"
+                        step="50"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Height</Label>
+                      <Input
+                        type="number"
+                        value={canvasHeight}
+                        onChange={(e) => resizeCanvas(canvasWidth, Number(e.target.value))}
+                        min="400"
+                        max="3000"
+                        step="50"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    <Button 
+                      onClick={() => resizeCanvas(1200, 900)} 
+                      variant="outline" 
+                      size="sm"
+                      className="text-xs"
+                    >
+                      1200×900
+                    </Button>
+                    <Button 
+                      onClick={() => resizeCanvas(1920, 1080)} 
+                      variant="outline" 
+                      size="sm"
+                      className="text-xs"
+                    >
+                      1920×1080
+                    </Button>
+                    <Button 
+                      onClick={() => resizeCanvas(2480, 3508)} 
+                      variant="outline" 
+                      size="sm"
+                      className="text-xs"
+                    >
+                      A4
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2 border-t pt-2">
                   <Label>Background Color</Label>
                   <div className="flex space-x-2">
                     <Input
@@ -808,7 +884,43 @@ export default function HtmlBuilderPage() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 border-t pt-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={showGrid}
+                      onChange={toggleGrid}
+                      className="w-4 h-4"
+                    />
+                    <Label>Show Grid</Label>
+                  </div>
+                  {showGrid && (
+                    <div>
+                      <Label className="text-xs">Grid Size: {gridSize}px</Label>
+                      <Input
+                        type="range"
+                        value={gridSize}
+                        onChange={(e) => setGridSize(Number(e.target.value))}
+                        min="10"
+                        max="100"
+                        step="10"
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2 border-t pt-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={showRulers}
+                      onChange={() => setShowRulers(!showRulers)}
+                      className="w-4 h-4"
+                    />
+                    <Label>Show Rulers</Label>
+                  </div>
+                </div>
+                <div className="space-y-2 border-t pt-2">
                   <Label>Zoom: {Math.round(canvasScale * 100)}%</Label>
                   <div className="grid grid-cols-3 gap-1">
                     <Button onClick={zoomOut} variant="outline" size="sm">
@@ -830,32 +942,85 @@ export default function HtmlBuilderPage() {
           </div>
 
           {/* Center - Canvas */}
-          <div className="col-span-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Design Area</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="relative border-2 border-gray-300 bg-gray-100 p-4 rounded-lg shadow-inner">
-                  <div className="absolute top-2 right-2 bg-white px-3 py-1 rounded shadow-sm text-xs text-gray-600">
-                    {Math.round(canvasScale * 100)}% • {canvas?.getObjects().length || 0} objects
+          <div className="flex-1 flex flex-col min-w-0">
+            <Card className="h-full flex flex-col">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Design Area</CardTitle>
+                  <div className="text-xs text-gray-600">
+                    {canvasWidth}×{canvasHeight} • {Math.round(canvasScale * 100)}% • {canvas?.getObjects().length || 0} objects
                   </div>
-                  <canvas 
-                    ref={canvasRef} 
-                    className="mx-auto shadow-lg" 
-                    style={{ 
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      backgroundColor: '#fff'
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col min-h-0">
+                <div className="flex-1 relative border-2 border-gray-300 bg-gray-100 rounded-lg shadow-inner overflow-auto">
+                  {showRulers && (
+                    <>
+                      {/* Horizontal ruler */}
+                      <div className="absolute top-0 left-8 right-0 h-8 bg-gray-200 border-b border-gray-400 flex items-end overflow-hidden z-10">
+                        {Array.from({ length: Math.ceil(canvasWidth / 50) + 1 }).map((_, i) => (
+                          <div key={i} className="relative" style={{ width: `${50 * canvasScale}px` }}>
+                            <div className="absolute bottom-0 left-0 w-px h-2 bg-gray-600"></div>
+                            <div className="absolute bottom-2 left-1 text-[8px] text-gray-600">{i * 50}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Vertical ruler */}
+                      <div className="absolute top-8 left-0 bottom-0 w-8 bg-gray-200 border-r border-gray-400 flex flex-col items-end overflow-hidden z-10">
+                        {Array.from({ length: Math.ceil(canvasHeight / 50) + 1 }).map((_, i) => (
+                          <div key={i} className="relative" style={{ height: `${50 * canvasScale}px` }}>
+                            <div className="absolute top-0 right-0 h-px w-2 bg-gray-600"></div>
+                            <div className="absolute top-1 right-2 text-[8px] text-gray-600 -rotate-90 origin-top-right">{i * 50}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Corner square */}
+                      <div className="absolute top-0 left-0 w-8 h-8 bg-gray-300 border-r border-b border-gray-400 z-20"></div>
+                    </>
+                  )}
+                  <div 
+                    className="absolute p-4"
+                    style={{
+                      top: showRulers ? '32px' : '0',
+                      left: showRulers ? '32px' : '0',
+                      right: '0',
+                      bottom: '0'
                     }}
-                  />
+                  >
+                    <div className="relative inline-block">
+                      {showGrid && (
+                        <div 
+                          className="absolute inset-0 pointer-events-none"
+                          style={{
+                            backgroundImage: `
+                              linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(0,0,0,0.1) 1px, transparent 1px)
+                            `,
+                            backgroundSize: `${gridSize * canvasScale}px ${gridSize * canvasScale}px`,
+                            width: `${canvasWidth * canvasScale}px`,
+                            height: `${canvasHeight * canvasScale}px`
+                          }}
+                        />
+                      )}
+                      <canvas 
+                        ref={canvasRef} 
+                        className="shadow-lg" 
+                        style={{ 
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          backgroundColor: '#fff'
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Right Sidebar - Properties */}
-          <div className="col-span-3">
+          <div className="w-80 flex-shrink-0 overflow-y-auto space-y-4 pl-2"
+            style={{ scrollbarWidth: 'thin' }}>
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Properties</CardTitle>
