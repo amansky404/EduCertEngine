@@ -4,8 +4,36 @@ import { verifyToken, extractToken } from '@/lib/auth'
 import { generateQRCode } from '@/lib/qr'
 import crypto from 'crypto'
 
+/**
+ * Generate a document for a student using a specified template.
+ *
+ * Authentication:
+ *   - Requires Bearer token in the Authorization header.
+ *   - User must have 'admin' role and a valid universityId.
+ *
+ * Request Body (application/json):
+ *   {
+ *     "studentId": string,   // Required. The ID of the student.
+ *     "templateId": string   // Required. The ID of the template to use.
+ *   }
+ *
+ * Responses:
+ *   200 OK
+ *     {
+ *       "documentId": string,
+ *       "qrCode": string, // base64-encoded QR code image
+ *       ... // other document fields
+ *     }
+ *   400 Bad Request
+ *     { "error": "Missing required fields: studentId and templateId" }
+ *   401 Unauthorized
+ *     { "error": "Unauthorized" }
+ *   404 Not Found
+ *     { "error": "Student not found" } or { "error": "Template not found" }
+ *   500 Internal Server Error
+ *     { "error": "Internal server error" }
+ */
 export async function POST(request: NextRequest) {
-  try {
     const token = extractToken(request.headers.get('authorization'))
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
