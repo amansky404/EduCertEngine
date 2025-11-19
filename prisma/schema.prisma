@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -43,10 +43,10 @@ model University {
   seoDescription String?
   seoKeywords String?
   seoOgImage  String?
-  seoJsonLd   String?  @db.Text
+  seoJsonLd   String?
   
   // Landing Page Settings
-  landingPageData Json?
+  landingPageData String?  // JSON string
   
   // Status
   isActive    Boolean  @default(true)
@@ -81,12 +81,8 @@ model UniversityAdmin {
   @@index([email])
 }
 
-// Template Types Enum
-enum TemplateType {
-  HTML
-  PDF_MAPPER
-  DIRECT_UPLOAD
-}
+// Template Types - using String instead of Enum for SQLite compatibility
+// Possible values: "HTML", "PDF_MAPPER", "DIRECT_UPLOAD"
 
 // Template Model
 model Template {
@@ -95,24 +91,24 @@ model Template {
   university   University   @relation(fields: [universityId], references: [id], onDelete: Cascade)
   
   name         String
-  type         TemplateType
+  type         String       // "HTML", "PDF_MAPPER", or "DIRECT_UPLOAD"
   description  String?
   
   // Template Content
-  htmlContent  String?      @db.Text
-  htmlConfig   Json?        // Fabric.js or Konva.js config
+  htmlContent  String?
+  htmlConfig   String?      // JSON string - Fabric.js or Konva.js config
   
   // PDF/JPEG Mapper
   backgroundUrl String?
-  mappingConfig Json?        // Field mapping configuration
+  mappingConfig String?      // JSON string - Field mapping configuration
   
   // Direct Upload
   zipUrl       String?
-  fileMapping  Json?        // CSV to filename mapping
+  fileMapping  String?      // JSON string - CSV to filename mapping
   
   // QR Settings
   qrEnabled    Boolean      @default(true)
-  qrPosition   Json?        // x, y coordinates
+  qrPosition   String?      // JSON string - x, y coordinates
   
   // Status
   isActive     Boolean      @default(true)
@@ -136,7 +132,7 @@ model CsvConfig {
   template     Template   @relation(fields: [templateId], references: [id], onDelete: Cascade)
   
   name         String
-  fields       Json       // Array of field definitions
+  fields       String     // JSON string - Array of field definitions
   
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -161,7 +157,7 @@ model Student {
   mobile       String?
   
   // Additional Data
-  customData   Json?      // Flexible field storage
+  customData   String?    // JSON string - Flexible field storage
   
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -194,7 +190,7 @@ model Document {
   qrUrl        String?
   
   // Metadata
-  metadata     Json?
+  metadata     String?    // JSON string
   
   // Status
   isPublished  Boolean    @default(false)
@@ -238,7 +234,7 @@ model AuditLog {
   action       String
   entity       String
   entityId     String?
-  details      Json?
+  details      String?    // JSON string
   ipAddress    String?
   userAgent    String?
   
