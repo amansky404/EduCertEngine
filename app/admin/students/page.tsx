@@ -245,7 +245,7 @@ export default function StudentsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="fatherName">Father's Name</Label>
+                      <Label htmlFor="fatherName">Father&apos;s Name</Label>
                       <Input
                         id="fatherName"
                         value={formData.fatherName}
@@ -255,7 +255,7 @@ export default function StudentsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="motherName">Mother's Name</Label>
+                      <Label htmlFor="motherName">Mother&apos;s Name</Label>
                       <Input
                         id="motherName"
                         value={formData.motherName}

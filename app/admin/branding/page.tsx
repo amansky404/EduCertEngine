@@ -85,7 +85,7 @@ export default function BrandingPage() {
             <div>
               <h1 className="text-2xl font-bold">Branding</h1>
               <p className="text-sm text-gray-600">
-                Customize your university's visual identity
+                Customize your university&apos;s visual identity
               </p>
             </div>
             <Link href="/admin/dashboard">
@@ -103,7 +103,7 @@ export default function BrandingPage() {
             <CardHeader>
               <CardTitle>Brand Colors</CardTitle>
               <CardDescription>
-                Define your university's color scheme
+                Define your university&apos;s color scheme
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

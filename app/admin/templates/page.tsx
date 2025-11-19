@@ -237,9 +237,11 @@ export default function TemplatesPage() {
                       {template.description || "No description"}
                     </p>
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" className="flex-1">
-                        Edit
-                      </Button>
+                      <Link href={`/admin/templates/${template.type.toLowerCase().replace('_', '-')}/${template.id}`}>
+                        <Button size="sm" variant="outline" className="flex-1">
+                          Edit
+                        </Button>
+                      </Link>
                       <Button size="sm" variant="outline" className="flex-1">
                         Preview
                       </Button>

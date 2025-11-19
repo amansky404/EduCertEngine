@@ -37,7 +37,7 @@ export default function LandingBuilderPage() {
             <div>
               <h1 className="text-2xl font-bold">Landing Page Builder</h1>
               <p className="text-sm text-gray-600">
-                Customize your university's public portal
+                Customize your university&apos;s public portal
               </p>
             </div>
             <Link href="/admin/dashboard">
