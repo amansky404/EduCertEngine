@@ -5,6 +5,7 @@
 import fs from 'fs'
 import path from 'path'
 import { generateQRCodeBuffer } from './qr'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 
 export interface PDFGenerationOptions {
   html?: string
@@ -16,6 +17,32 @@ export interface PDFGenerationOptions {
   }
   watermark?: string
   outputPath: string
+}
+
+export interface FieldMapping {
+  id: string
+  name: string
+  label: string
+  x: number
+  y: number
+  width: number
+  height: number
+  fontSize: number
+  fontFamily: string
+  color: string
+  type: "text" | "image" | "qr" | "date" | "number" | "checkbox" | "dropdown"
+}
+
+export interface PDFMapperOptions {
+  backgroundPath: string
+  fields: FieldMapping[]
+  data: Record<string, any>
+  outputPath: string
+  qrCode?: {
+    enabled: boolean
+    data: string
+    position?: { x: number; y: number }
+  }
 }
 
 /**
@@ -139,6 +166,276 @@ export async function generatePDFWithPDFKit(options: PDFGenerationOptions): Prom
       reject(error)
     }
   })
+}
+
+/**
+ * Generate PDF from field mapper template using pdf-lib
+ * This supports PDF/JPEG background with positioned fields
+ */
+export async function generatePDFFromMapper(options: PDFMapperOptions): Promise<string> {
+  const { backgroundPath, fields, data, outputPath, qrCode } = options
+  
+  try {
+    // Ensure output directory exists
+    const outputDir = path.dirname(outputPath)
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true })
+    }
+
+    // Create a new PDF document or load existing background
+    let pdfDoc: PDFDocument
+    
+    if (backgroundPath.endsWith('.pdf')) {
+      // Load existing PDF
+      const existingPdfBytes = fs.readFileSync(backgroundPath)
+      pdfDoc = await PDFDocument.load(existingPdfBytes)
+    } else {
+      // Create new PDF with image background
+      pdfDoc = await PDFDocument.create()
+      const page = pdfDoc.addPage([595, 842]) // A4 size
+      
+      // Load and embed background image
+      const imageBytes = fs.readFileSync(backgroundPath)
+      let image
+      
+      if (backgroundPath.endsWith('.png')) {
+        image = await pdfDoc.embedPng(imageBytes)
+      } else if (backgroundPath.endsWith('.jpg') || backgroundPath.endsWith('.jpeg')) {
+        image = await pdfDoc.embedJpg(imageBytes)
+      }
+      
+      if (image) {
+        const { width, height } = page.getSize()
+        page.drawImage(image, {
+          x: 0,
+          y: 0,
+          width: width,
+          height: height,
+        })
+      }
+    }
+
+    const pages = pdfDoc.getPages()
+    const firstPage = pages[0]
+    const { height } = firstPage.getSize()
+    
+    // Embed font
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+
+    // Add fields to PDF
+    for (const field of fields) {
+      const value = data[field.name] || ''
+      
+      if (field.type === 'text' || field.type === 'number' || field.type === 'date') {
+        // Convert color hex to RGB
+        const color = hexToRgb(field.color)
+        
+        firstPage.drawText(String(value), {
+          x: field.x,
+          y: height - field.y - field.fontSize, // Flip Y coordinate
+          size: field.fontSize,
+          font: font,
+          color: rgb(color.r / 255, color.g / 255, color.b / 255),
+        })
+      } else if (field.type === 'checkbox' && value) {
+        // Draw checkbox mark
+        firstPage.drawText('✓', {
+          x: field.x,
+          y: height - field.y - 20,
+          size: 20,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        })
+      } else if (field.type === 'image' && value) {
+        // Handle image fields if path is provided
+        try {
+          if (fs.existsSync(value)) {
+            const imgBytes = fs.readFileSync(value)
+            let img
+            
+            if (value.endsWith('.png')) {
+              img = await pdfDoc.embedPng(imgBytes)
+            } else if (value.endsWith('.jpg') || value.endsWith('.jpeg')) {
+              img = await pdfDoc.embedJpg(imgBytes)
+            }
+            
+            if (img) {
+              firstPage.drawImage(img, {
+                x: field.x,
+                y: height - field.y - field.height,
+                width: field.width,
+                height: field.height,
+              })
+            }
+          }
+        } catch (error) {
+          console.error('Error embedding image:', error)
+        }
+      }
+    }
+
+    // Add QR code if enabled
+    if (qrCode?.enabled && qrCode.data) {
+      try {
+        const qrBuffer = await generateQRCodeBuffer(qrCode.data)
+        const qrImage = await pdfDoc.embedPng(qrBuffer)
+        const position = qrCode.position || { x: 50, y: 50 }
+        
+        firstPage.drawImage(qrImage, {
+          x: position.x,
+          y: height - position.y - 100,
+          width: 100,
+          height: 100,
+        })
+      } catch (error) {
+        console.error('Error adding QR code:', error)
+      }
+    }
+
+    // Save PDF
+    const pdfBytes = await pdfDoc.save()
+    fs.writeFileSync(outputPath, pdfBytes)
+    
+    return outputPath
+  } catch (error) {
+    console.error('Error generating PDF from mapper:', error)
+    throw new Error('Failed to generate PDF from mapper')
+  }
+}
+
+/**
+ * Generate PDF from Fabric.js canvas JSON
+ * This supports the HTML builder templates
+ */
+export async function generatePDFFromCanvas(
+  canvasJSON: any,
+  outputPath: string,
+  data: Record<string, any> = {},
+  qrCode?: { enabled: boolean; data: string; position?: { x: number; y: number } }
+): Promise<string> {
+  try {
+    // Ensure output directory exists
+    const outputDir = path.dirname(outputPath)
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true })
+    }
+
+    // Create PDF document
+    const pdfDoc = await PDFDocument.create()
+    const width = canvasJSON.width || 595
+    const height = canvasJSON.height || 842
+    const page = pdfDoc.addPage([width, height])
+    
+    // Set background color if specified
+    if (canvasJSON.backgroundColor) {
+      const bgColor = hexToRgb(canvasJSON.backgroundColor)
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: width,
+        height: height,
+        color: rgb(bgColor.r / 255, bgColor.g / 255, bgColor.b / 255),
+      })
+    }
+
+    // Embed fonts
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+
+    // Process canvas objects
+    if (canvasJSON.objects) {
+      for (const obj of canvasJSON.objects) {
+        if (obj.type === 'text' || obj.type === 'i-text') {
+          let text = obj.text || ''
+          
+          // Replace variables with data
+          text = mergeTemplateVariables(text, data)
+          
+          const color = hexToRgb(obj.fill || '#000000')
+          const fontSize = obj.fontSize || 12
+          const scaleX = obj.scaleX || 1
+          const scaleY = obj.scaleY || 1
+          
+          page.drawText(text, {
+            x: obj.left || 0,
+            y: height - (obj.top || 0) - (fontSize * scaleY),
+            size: fontSize * scaleY,
+            font: font,
+            color: rgb(color.r / 255, color.g / 255, color.b / 255),
+          })
+        } else if (obj.type === 'rect') {
+          const fillColor = hexToRgb(obj.fill || '#ffffff')
+          const strokeColor = hexToRgb(obj.stroke || '#000000')
+          
+          page.drawRectangle({
+            x: obj.left || 0,
+            y: height - (obj.top || 0) - (obj.height || 0) * (obj.scaleY || 1),
+            width: (obj.width || 0) * (obj.scaleX || 1),
+            height: (obj.height || 0) * (obj.scaleY || 1),
+            color: rgb(fillColor.r / 255, fillColor.g / 255, fillColor.b / 255),
+            borderColor: rgb(strokeColor.r / 255, strokeColor.g / 255, strokeColor.b / 255),
+            borderWidth: obj.strokeWidth || 0,
+          })
+        } else if (obj.type === 'circle') {
+          const fillColor = hexToRgb(obj.fill || '#ffffff')
+          const radius = (obj.radius || 50) * (obj.scaleX || 1)
+          
+          page.drawCircle({
+            x: (obj.left || 0) + radius,
+            y: height - (obj.top || 0) - radius,
+            size: radius,
+            color: rgb(fillColor.r / 255, fillColor.g / 255, fillColor.b / 255),
+            borderColor: rgb(0, 0, 0),
+            borderWidth: obj.strokeWidth || 0,
+          })
+        }
+        // Add more object types as needed
+      }
+    }
+
+    // Add QR code if enabled
+    if (qrCode?.enabled && qrCode.data) {
+      try {
+        const qrBuffer = await generateQRCodeBuffer(qrCode.data)
+        const qrImage = await pdfDoc.embedPng(qrBuffer)
+        const position = qrCode.position || { x: 50, y: 50 }
+        
+        page.drawImage(qrImage, {
+          x: position.x,
+          y: height - position.y - 100,
+          width: 100,
+          height: 100,
+        })
+      } catch (error) {
+        console.error('Error adding QR code:', error)
+      }
+    }
+
+    // Save PDF
+    const pdfBytes = await pdfDoc.save()
+    fs.writeFileSync(outputPath, pdfBytes)
+    
+    return outputPath
+  } catch (error) {
+    console.error('Error generating PDF from canvas:', error)
+    throw new Error('Failed to generate PDF from canvas')
+  }
+}
+
+/**
+ * Convert hex color to RGB
+ */
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  // Remove # if present
+  hex = hex.replace('#', '')
+  
+  // Parse hex values
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+  
+  return { r, g, b }
 }
 
 /**

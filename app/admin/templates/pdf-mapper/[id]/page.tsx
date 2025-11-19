@@ -186,23 +186,30 @@ export default function PdfMapperPage() {
     e.stopPropagation()
     setSelectedField(field)
     setIsDragging(true)
-    setDragStart({ x: e.clientX - field.x, y: e.clientY - field.y })
+    const rect = imageRef.current?.getBoundingClientRect()
+    if (rect) {
+      const offsetX = e.clientX - rect.left - field.x
+      const offsetY = e.clientY - rect.top - field.y
+      setDragStart({ x: offsetX, y: offsetY })
+    }
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !selectedField || !imageRef.current) return
 
     const rect = imageRef.current.getBoundingClientRect()
-    let x = e.clientX - rect.left - dragStart.x
-    let y = e.clientY - rect.top - dragStart.y
+    let x = (e.clientX - rect.left - dragStart.x) / canvasScale
+    let y = (e.clientY - rect.top - dragStart.y) / canvasScale
 
     // Apply grid snapping
     x = snapToGrid(x)
     y = snapToGrid(y)
 
     // Constrain to canvas bounds
-    x = Math.max(0, Math.min(x, rect.width - selectedField.width))
-    y = Math.max(0, Math.min(y, rect.height - selectedField.height))
+    const imgWidth = imageRef.current.querySelector('img')?.naturalWidth || rect.width / canvasScale
+    const imgHeight = imageRef.current.querySelector('img')?.naturalHeight || rect.height / canvasScale
+    x = Math.max(0, Math.min(x, imgWidth - selectedField.width))
+    y = Math.max(0, Math.min(y, imgHeight - selectedField.height))
 
     updateField(selectedField.id, { x, y })
   }
