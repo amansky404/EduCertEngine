@@ -34,6 +34,7 @@ import crypto from 'crypto'
  *     { "error": "Internal server error" }
  */
 export async function POST(request: NextRequest) {
+  try {
     const token = extractToken(request.headers.get('authorization'))
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
