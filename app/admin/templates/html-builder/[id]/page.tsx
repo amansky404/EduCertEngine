@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { fabric } from "fabric"
+import { HexColorPicker } from "react-colorful"
+import { Type, Image as ImageIcon, Square, Circle, Minus, QrCode, Palette, Sparkles } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -125,8 +127,16 @@ export default function HtmlBuilderPage() {
   const [showGrid, setShowGrid] = useState(false)
   const [gridSize, setGridSize] = useState(20)
   const [darkMode, setDarkMode] = useState(false)
+  const [showColorPicker, setShowColorPicker] = useState(false)
+  const [showBgColorPicker, setShowBgColorPicker] = useState(false)
+  const [googleFonts, setGoogleFonts] = useState<string[]>([
+    "Arial", "Times New Roman", "Courier New", "Georgia", "Verdana",
+    "Roboto", "Open Sans", "Lato", "Montserrat", "Oswald", 
+    "Playfair Display", "Raleway", "Poppins", "Inter", "Dancing Script"
+  ])
   const [collapsedPanels, setCollapsedPanels] = useState<{[key: string]: boolean}>({
     elements: false,
+    effects: false,
     variables: false,
     alignment: false,
     layer: false,
@@ -135,6 +145,21 @@ export default function HtmlBuilderPage() {
     layers: false,
     shortcuts: false
   })
+
+  // Load Google Fonts dynamically
+  useEffect(() => {
+    const loadGoogleFont = (fontName: string) => {
+      const link = document.createElement('link')
+      link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@400;700&display=swap`
+      link.rel = 'stylesheet'
+      document.head.appendChild(link)
+    }
+
+    // Load Google Fonts
+    const googleFontNames = ["Roboto", "Open Sans", "Lato", "Montserrat", "Oswald", 
+                             "Playfair Display", "Raleway", "Poppins", "Inter", "Dancing Script"]
+    googleFontNames.forEach(loadGoogleFont)
+  }, [])
 
   // Update layers when canvas objects change
   useEffect(() => {
@@ -549,6 +574,66 @@ export default function HtmlBuilderPage() {
     }))
   }
 
+  // Advanced filter effects
+  const applyFilter = (filterType: string) => {
+    if (!canvas || !selectedObject || selectedObject.type !== 'image') return
+    
+    const imgObj = selectedObject as fabric.Image
+    
+    switch(filterType) {
+      case 'grayscale':
+        imgObj.filters = [new fabric.Image.filters.Grayscale()]
+        break
+      case 'sepia':
+        imgObj.filters = [new fabric.Image.filters.Sepia()]
+        break
+      case 'brightness':
+        imgObj.filters = [new fabric.Image.filters.Brightness({ brightness: 0.3 })]
+        break
+      case 'contrast':
+        imgObj.filters = [new fabric.Image.filters.Contrast({ contrast: 0.3 })]
+        break
+      case 'blur':
+        imgObj.filters = [new fabric.Image.filters.Blur({ blur: 0.5 })]
+        break
+      case 'invert':
+        imgObj.filters = [new fabric.Image.filters.Invert()]
+        break
+      case 'none':
+        imgObj.filters = []
+        break
+    }
+    
+    imgObj.applyFilters()
+    canvas.renderAll()
+    saveState()
+  }
+
+  // Add shadow effect
+  const addShadow = () => {
+    if (!canvas || !selectedObject) return
+    
+    selectedObject.set({
+      shadow: new fabric.Shadow({
+        color: 'rgba(0,0,0,0.3)',
+        blur: 10,
+        offsetX: 5,
+        offsetY: 5
+      })
+    })
+    
+    canvas.renderAll()
+    saveState()
+  }
+
+  // Remove shadow
+  const removeShadow = () => {
+    if (!canvas || !selectedObject) return
+    selectedObject.set({ shadow: undefined })
+    canvas.renderAll()
+    saveState()
+  }
+
   const saveTemplate = async () => {
     if (!canvas) return
 
@@ -658,23 +743,124 @@ export default function HtmlBuilderPage() {
               </CardHeader>
               {!collapsedPanels.elements && (
                 <CardContent className="space-y-2">
-                  <Button onClick={addText} className="w-full" variant="outline">
-                    + Add Text
+                  <Button onClick={addText} className="w-full justify-start" variant="outline">
+                    <Type className="mr-2 h-4 w-4" />
+                    Add Text
                   </Button>
-                  <Button onClick={addRectangle} className="w-full" variant="outline">
-                    + Add Rectangle
+                  <Button onClick={addRectangle} className="w-full justify-start" variant="outline">
+                    <Square className="mr-2 h-4 w-4" />
+                    Add Rectangle
                   </Button>
-                  <Button onClick={addCircle} className="w-full" variant="outline">
-                    + Add Circle
+                  <Button onClick={addCircle} className="w-full justify-start" variant="outline">
+                    <Circle className="mr-2 h-4 w-4" />
+                    Add Circle
                   </Button>
-                  <Button onClick={addLine} className="w-full" variant="outline">
-                    + Add Line
+                  <Button onClick={addLine} className="w-full justify-start" variant="outline">
+                    <Minus className="mr-2 h-4 w-4" />
+                    Add Line
                   </Button>
-                  <Button onClick={addImage} className="w-full" variant="outline">
-                    + Add Image
+                  <Button onClick={addImage} className="w-full justify-start" variant="outline">
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    Add Image
                   </Button>
-                  <Button onClick={addQRCodePlaceholder} className="w-full" variant="outline">
-                    + Add QR Code
+                  <Button onClick={addQRCodePlaceholder} className="w-full justify-start" variant="outline">
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Add QR Code
+                  </Button>
+                </CardContent>
+              )}
+            </Card>
+
+            <Card className={darkMode ? 'bg-gray-800 border-gray-700' : ''}>
+              <CardHeader className="cursor-pointer" onClick={() => togglePanel('effects')}>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Effects
+                  </CardTitle>
+                  <span className="text-sm">{collapsedPanels.effects ? '▼' : '▲'}</span>
+                </div>
+              </CardHeader>
+              {!collapsedPanels.effects && (
+                <CardContent className="space-y-2">
+                  <div className="text-xs font-semibold text-gray-600 mb-2">Image Filters</div>
+                  <div className="grid grid-cols-2 gap-1">
+                    <Button 
+                      onClick={() => applyFilter('grayscale')} 
+                      variant="outline" 
+                      size="sm"
+                      disabled={!selectedObject || selectedObject.type !== 'image'}
+                    >
+                      Grayscale
+                    </Button>
+                    <Button 
+                      onClick={() => applyFilter('sepia')} 
+                      variant="outline" 
+                      size="sm"
+                      disabled={!selectedObject || selectedObject.type !== 'image'}
+                    >
+                      Sepia
+                    </Button>
+                    <Button 
+                      onClick={() => applyFilter('brightness')} 
+                      variant="outline" 
+                      size="sm"
+                      disabled={!selectedObject || selectedObject.type !== 'image'}
+                    >
+                      Brighten
+                    </Button>
+                    <Button 
+                      onClick={() => applyFilter('contrast')} 
+                      variant="outline" 
+                      size="sm"
+                      disabled={!selectedObject || selectedObject.type !== 'image'}
+                    >
+                      Contrast
+                    </Button>
+                    <Button 
+                      onClick={() => applyFilter('blur')} 
+                      variant="outline" 
+                      size="sm"
+                      disabled={!selectedObject || selectedObject.type !== 'image'}
+                    >
+                      Blur
+                    </Button>
+                    <Button 
+                      onClick={() => applyFilter('invert')} 
+                      variant="outline" 
+                      size="sm"
+                      disabled={!selectedObject || selectedObject.type !== 'image'}
+                    >
+                      Invert
+                    </Button>
+                  </div>
+                  <Button 
+                    onClick={() => applyFilter('none')} 
+                    variant="outline" 
+                    size="sm"
+                    className="w-full"
+                    disabled={!selectedObject || selectedObject.type !== 'image'}
+                  >
+                    Remove Filters
+                  </Button>
+                  <div className="text-xs font-semibold text-gray-600 mt-3 mb-2 border-t pt-2">Shadow Effects</div>
+                  <Button 
+                    onClick={addShadow} 
+                    variant="outline" 
+                    size="sm"
+                    className="w-full"
+                    disabled={!selectedObject}
+                  >
+                    Add Shadow
+                  </Button>
+                  <Button 
+                    onClick={removeShadow} 
+                    variant="outline" 
+                    size="sm"
+                    className="w-full"
+                    disabled={!selectedObject}
+                  >
+                    Remove Shadow
                   </Button>
                 </CardContent>
               )}
@@ -912,26 +1098,37 @@ export default function HtmlBuilderPage() {
                   </div>
                 </div>
                 <div className="space-y-2 border-t pt-2">
-                  <Label>Background Color</Label>
-                  <div className="flex space-x-2">
-                    <Input
-                      type="color"
-                      value={bgColor}
-                      onChange={(e) => {
-                        setBgColor(e.target.value)
-                        setCanvasBgColor(e.target.value)
-                      }}
-                      className="w-20"
+                  <Label className="flex items-center">
+                    <Palette className="mr-2 h-4 w-4" />
+                    Background Color
+                  </Label>
+                  <div className="space-y-2">
+                    <div 
+                      className="w-full h-10 rounded border-2 cursor-pointer"
+                      style={{ backgroundColor: bgColor }}
+                      onClick={() => setShowBgColorPicker(!showBgColorPicker)}
                     />
-                    <Input
-                      type="text"
-                      value={bgColor}
-                      onChange={(e) => {
-                        setBgColor(e.target.value)
-                        setCanvasBgColor(e.target.value)
-                      }}
-                      className="flex-1"
-                    />
+                    {showBgColorPicker && (
+                      <div className="p-2 bg-white dark:bg-gray-800 rounded border shadow-lg">
+                        <HexColorPicker 
+                          color={bgColor} 
+                          onChange={(color) => {
+                            setBgColor(color)
+                            setCanvasBgColor(color)
+                          }}
+                        />
+                        <Input
+                          type="text"
+                          value={bgColor}
+                          onChange={(e) => {
+                            setBgColor(e.target.value)
+                            setCanvasBgColor(e.target.value)
+                          }}
+                          className="mt-2"
+                          placeholder="#ffffff"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2 border-t pt-2">
@@ -1125,44 +1322,68 @@ export default function HtmlBuilderPage() {
                               setFontFamily(e.target.value)
                               setTimeout(updateSelectedText, 0)
                             }}
-                            className="w-full border rounded px-3 py-2"
+                            className={`w-full border rounded px-3 py-2 ${darkMode ? 'bg-gray-700 border-gray-600' : ''}`}
                           >
-                            <option value="Arial">Arial</option>
-                            <option value="Times New Roman">Times New Roman</option>
-                            <option value="Courier New">Courier New</option>
-                            <option value="Georgia">Georgia</option>
-                            <option value="Verdana">Verdana</option>
-                            <option value="Comic Sans MS">Comic Sans MS</option>
-                            <option value="Impact">Impact</option>
-                            <option value="Trebuchet MS">Trebuchet MS</option>
+                            <optgroup label="System Fonts">
+                              <option value="Arial">Arial</option>
+                              <option value="Times New Roman">Times New Roman</option>
+                              <option value="Courier New">Courier New</option>
+                              <option value="Georgia">Georgia</option>
+                              <option value="Verdana">Verdana</option>
+                              <option value="Comic Sans MS">Comic Sans MS</option>
+                              <option value="Impact">Impact</option>
+                              <option value="Trebuchet MS">Trebuchet MS</option>
+                            </optgroup>
+                            <optgroup label="Google Fonts (Internet)">
+                              <option value="Roboto">Roboto</option>
+                              <option value="Open Sans">Open Sans</option>
+                              <option value="Lato">Lato</option>
+                              <option value="Montserrat">Montserrat</option>
+                              <option value="Oswald">Oswald</option>
+                              <option value="Playfair Display">Playfair Display</option>
+                              <option value="Raleway">Raleway</option>
+                              <option value="Poppins">Poppins</option>
+                              <option value="Inter">Inter</option>
+                              <option value="Dancing Script">Dancing Script</option>
+                            </optgroup>
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <Label>Text Color</Label>
-                          <div className="flex space-x-2">
-                            <Input
-                              type="color"
-                              value={textColor}
-                              onChange={(e) => {
-                                setTextColor(e.target.value)
-                                if (canvas && selectedObject && (selectedObject.type === "text" || selectedObject.type === "i-text")) {
-                                  const textObj = selectedObject as fabric.IText
-                                  textObj.set({ fill: e.target.value })
-                                  canvas.renderAll()
-                                }
-                              }}
-                              className="w-20"
+                          <Label className="flex items-center">
+                            <Palette className="mr-2 h-4 w-4" />
+                            Text Color
+                          </Label>
+                          <div className="space-y-2">
+                            <div 
+                              className="w-full h-10 rounded border-2 cursor-pointer"
+                              style={{ backgroundColor: textColor }}
+                              onClick={() => setShowColorPicker(!showColorPicker)}
                             />
-                            <Input
-                              type="text"
-                              value={textColor}
-                              onChange={(e) => {
-                                setTextColor(e.target.value)
-                                updateSelectedText()
-                              }}
-                              className="flex-1"
-                              placeholder="#000000"
-                            />
+                            {showColorPicker && (
+                              <div className="p-2 bg-white dark:bg-gray-800 rounded border shadow-lg">
+                                <HexColorPicker 
+                                  color={textColor} 
+                                  onChange={(color) => {
+                                    setTextColor(color)
+                                    if (canvas && selectedObject && (selectedObject.type === "text" || selectedObject.type === "i-text")) {
+                                      const textObj = selectedObject as fabric.IText
+                                      textObj.set({ fill: color })
+                                      canvas.renderAll()
+                                    }
+                                  }}
+                                />
+                                <Input
+                                  type="text"
+                                  value={textColor}
+                                  onChange={(e) => {
+                                    setTextColor(e.target.value)
+                                    updateSelectedText()
+                                  }}
+                                  className="mt-2"
+                                  placeholder="#000000"
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </>
