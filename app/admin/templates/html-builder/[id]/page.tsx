@@ -90,14 +90,6 @@ export default function HtmlBuilderPage() {
       if (response.ok) {
         const data = await response.json()
         setTemplate(data.template)
-        
-        // Load existing configuration if available
-        if (data.template.htmlConfig && canvas) {
-          const config = JSON.parse(data.template.htmlConfig)
-          canvas.loadFromJSON(config, () => {
-            canvas.renderAll()
-          })
-        }
       }
     } catch (error) {
       console.error("Error fetching template:", error)
@@ -116,6 +108,20 @@ export default function HtmlBuilderPage() {
       setTextColor(obj.fill || "#000000")
     }
   }
+
+  // Load template configuration when both canvas and template are ready
+  useEffect(() => {
+    if (canvas && template && template.htmlConfig) {
+      try {
+        const config = JSON.parse(template.htmlConfig)
+        canvas.loadFromJSON(config, () => {
+          canvas.renderAll()
+        })
+      } catch (error) {
+        console.error("Error loading template configuration:", error)
+      }
+    }
+  }, [canvas, template])
 
   const [customVariables, setCustomVariables] = useState<string[]>([])
   const [newVariableName, setNewVariableName] = useState("")
