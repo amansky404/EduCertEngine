@@ -219,9 +219,22 @@ export async function generatePDFFromMapper(options: PDFMapperOptions): Promise<
     const firstPage = pages[0]
     const { height } = firstPage.getSize()
     
-    // Embed font
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
-    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    // Embed fonts
+    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman)
+    const courierFont = await pdfDoc.embedFont(StandardFonts.Courier)
+
+    // Helper function to get font based on fontFamily
+    const getFieldFont = (fontFamily?: string) => {
+      const family = (fontFamily || 'Helvetica').toLowerCase()
+      if (family.includes('times') || family.includes('roman')) {
+        return timesRomanFont
+      } else if (family.includes('courier')) {
+        return courierFont
+      }
+      return helveticaFont
+    }
 
     // Add fields to PDF
     for (const field of fields) {
@@ -230,12 +243,13 @@ export async function generatePDFFromMapper(options: PDFMapperOptions): Promise<
       if (field.type === 'text' || field.type === 'number' || field.type === 'date') {
         // Convert color hex to RGB
         const color = hexToRgb(field.color)
+        const selectedFont = getFieldFont(field.fontFamily)
         
         firstPage.drawText(String(value), {
           x: field.x,
           y: height - field.y - field.fontSize, // Flip Y coordinate
           size: field.fontSize,
-          font: font,
+          font: selectedFont,
           color: rgb(color.r / 255, color.g / 255, color.b / 255),
         })
       } else if (field.type === 'checkbox' && value) {
@@ -244,7 +258,7 @@ export async function generatePDFFromMapper(options: PDFMapperOptions): Promise<
           x: field.x,
           y: height - field.y - 20,
           size: 20,
-          font: boldFont,
+          font: helveticaBoldFont,
           color: rgb(0, 0, 0),
         })
       } else if (field.type === 'image' && value) {
@@ -340,8 +354,27 @@ export async function generatePDFFromCanvas(
     }
 
     // Embed fonts
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
-    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman)
+    const timesRomanBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold)
+    const courierFont = await pdfDoc.embedFont(StandardFonts.Courier)
+    const courierBoldFont = await pdfDoc.embedFont(StandardFonts.CourierBold)
+
+    // Helper function to get font based on fontFamily and fontWeight
+    const getFont = (fontFamily?: string, fontWeight?: string | number) => {
+      const isBold = fontWeight === 'bold' || fontWeight === 700 || fontWeight === '700'
+      const family = (fontFamily || 'Arial').toLowerCase()
+      
+      if (family.includes('times') || family.includes('roman')) {
+        return isBold ? timesRomanBoldFont : timesRomanFont
+      } else if (family.includes('courier')) {
+        return isBold ? courierBoldFont : courierFont
+      } else {
+        // Default to Helvetica (similar to Arial)
+        return isBold ? helveticaBoldFont : helveticaFont
+      }
+    }
 
     // Process canvas objects
     if (canvasJSON.objects) {
@@ -356,12 +389,13 @@ export async function generatePDFFromCanvas(
           const fontSize = obj.fontSize || 12
           const scaleX = obj.scaleX || 1
           const scaleY = obj.scaleY || 1
+          const selectedFont = getFont(obj.fontFamily, obj.fontWeight)
           
           page.drawText(text, {
             x: obj.left || 0,
             y: height - (obj.top || 0) - (fontSize * scaleY),
             size: fontSize * scaleY,
-            font: font,
+            font: selectedFont,
             color: rgb(color.r / 255, color.g / 255, color.b / 255),
           })
         } else if (obj.type === 'rect') {
@@ -379,6 +413,7 @@ export async function generatePDFFromCanvas(
           })
         } else if (obj.type === 'circle') {
           const fillColor = hexToRgb(obj.fill || '#ffffff')
+          const strokeColor = hexToRgb(obj.stroke || '#000000')
           const radius = (obj.radius || 50) * (obj.scaleX || 1)
           
           page.drawCircle({
@@ -386,9 +421,105 @@ export async function generatePDFFromCanvas(
             y: height - (obj.top || 0) - radius,
             size: radius,
             color: rgb(fillColor.r / 255, fillColor.g / 255, fillColor.b / 255),
-            borderColor: rgb(0, 0, 0),
+            borderColor: rgb(strokeColor.r / 255, strokeColor.g / 255, strokeColor.b / 255),
             borderWidth: obj.strokeWidth || 0,
           })
+        } else if (obj.type === 'line') {
+          // Support for line objects
+          const strokeColor = hexToRgb(obj.stroke || '#000000')
+          const x1 = obj.x1 || 0
+          const y1 = obj.y1 || 0
+          const x2 = obj.x2 || 0
+          const y2 = obj.y2 || 0
+          const left = obj.left || 0
+          const top = obj.top || 0
+          
+          page.drawLine({
+            start: { x: left + x1, y: height - (top + y1) },
+            end: { x: left + x2, y: height - (top + y2) },
+            thickness: obj.strokeWidth || 1,
+            color: rgb(strokeColor.r / 255, strokeColor.g / 255, strokeColor.b / 255),
+          })
+        } else if (obj.type === 'image') {
+          // Support for image objects
+          try {
+            if (obj.src) {
+              // Handle base64 encoded images
+              let imageBytes: Uint8Array
+              
+              if (obj.src.startsWith('data:image/png')) {
+                const base64Data = obj.src.split(',')[1]
+                imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+                const image = await pdfDoc.embedPng(imageBytes)
+                
+                const scaleX = obj.scaleX || 1
+                const scaleY = obj.scaleY || 1
+                const imgWidth = (obj.width || 100) * scaleX
+                const imgHeight = (obj.height || 100) * scaleY
+                
+                page.drawImage(image, {
+                  x: obj.left || 0,
+                  y: height - (obj.top || 0) - imgHeight,
+                  width: imgWidth,
+                  height: imgHeight,
+                })
+              } else if (obj.src.startsWith('data:image/jpeg') || obj.src.startsWith('data:image/jpg')) {
+                const base64Data = obj.src.split(',')[1]
+                imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+                const image = await pdfDoc.embedJpg(imageBytes)
+                
+                const scaleX = obj.scaleX || 1
+                const scaleY = obj.scaleY || 1
+                const imgWidth = (obj.width || 100) * scaleX
+                const imgHeight = (obj.height || 100) * scaleY
+                
+                page.drawImage(image, {
+                  x: obj.left || 0,
+                  y: height - (obj.top || 0) - imgHeight,
+                  width: imgWidth,
+                  height: imgHeight,
+                })
+              }
+            }
+          } catch (error) {
+            console.error('Error embedding image in PDF:', error)
+          }
+        } else if (obj.type === 'group') {
+          // Support for grouped objects (like QR code placeholders)
+          if (obj.objects && Array.isArray(obj.objects)) {
+            const groupLeft = obj.left || 0
+            const groupTop = obj.top || 0
+            
+            for (const groupObj of obj.objects) {
+              if (groupObj.type === 'rect') {
+                const fillColor = hexToRgb(groupObj.fill || '#ffffff')
+                const strokeColor = hexToRgb(groupObj.stroke || '#000000')
+                
+                page.drawRectangle({
+                  x: groupLeft + (groupObj.left || 0),
+                  y: height - (groupTop + (groupObj.top || 0)) - (groupObj.height || 0),
+                  width: groupObj.width || 0,
+                  height: groupObj.height || 0,
+                  color: rgb(fillColor.r / 255, fillColor.g / 255, fillColor.b / 255),
+                  borderColor: rgb(strokeColor.r / 255, strokeColor.g / 255, strokeColor.b / 255),
+                  borderWidth: groupObj.strokeWidth || 0,
+                })
+              } else if (groupObj.type === 'text') {
+                const text = groupObj.text || ''
+                const color = hexToRgb(groupObj.fill || '#000000')
+                const fontSize = groupObj.fontSize || 12
+                const selectedFont = getFont(groupObj.fontFamily, groupObj.fontWeight)
+                
+                page.drawText(text, {
+                  x: groupLeft + (groupObj.left || 0),
+                  y: height - (groupTop + (groupObj.top || 0)) - fontSize,
+                  size: fontSize,
+                  font: selectedFont,
+                  color: rgb(color.r / 255, color.g / 255, color.b / 255),
+                })
+              }
+            }
+          }
         }
         // Add more object types as needed
       }
