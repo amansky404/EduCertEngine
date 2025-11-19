@@ -124,6 +124,17 @@ export default function HtmlBuilderPage() {
   const [showRulers, setShowRulers] = useState(true)
   const [showGrid, setShowGrid] = useState(false)
   const [gridSize, setGridSize] = useState(20)
+  const [darkMode, setDarkMode] = useState(false)
+  const [collapsedPanels, setCollapsedPanels] = useState<{[key: string]: boolean}>({
+    elements: false,
+    variables: false,
+    alignment: false,
+    layer: false,
+    canvas: false,
+    properties: false,
+    layers: false,
+    shortcuts: false
+  })
 
   // Update layers when canvas objects change
   useEffect(() => {
@@ -531,6 +542,13 @@ export default function HtmlBuilderPage() {
     }
   }
 
+  const togglePanel = (panelName: string) => {
+    setCollapsedPanels(prev => ({
+      ...prev,
+      [panelName]: !prev[panelName]
+    }))
+  }
+
   const saveTemplate = async () => {
     if (!canvas) return
 
@@ -585,9 +603,9 @@ export default function HtmlBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50'}`}>
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} border-b`}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div>
@@ -597,6 +615,14 @@ export default function HtmlBuilderPage() {
               </p>
             </div>
             <div className="flex space-x-2">
+              <Button 
+                onClick={() => setDarkMode(!darkMode)} 
+                variant="outline" 
+                size="sm"
+                title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {darkMode ? "☀️" : "🌙"}
+              </Button>
               <Button onClick={undo} variant="outline" disabled={historyIndex <= 0} size="sm">
                 ↶ Undo
               </Button>
@@ -623,37 +649,46 @@ export default function HtmlBuilderPage() {
           {/* Left Sidebar - Tools */}
           <div className="w-64 flex-shrink-0 overflow-y-auto space-y-4 pr-2"
             style={{ scrollbarWidth: 'thin' }}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Elements</CardTitle>
+            <Card className={darkMode ? 'bg-gray-800 border-gray-700' : ''}>
+              <CardHeader className="cursor-pointer" onClick={() => togglePanel('elements')}>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Elements</CardTitle>
+                  <span className="text-sm">{collapsedPanels.elements ? '▼' : '▲'}</span>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <Button onClick={addText} className="w-full" variant="outline">
-                  + Add Text
-                </Button>
-                <Button onClick={addRectangle} className="w-full" variant="outline">
-                  + Add Rectangle
-                </Button>
-                <Button onClick={addCircle} className="w-full" variant="outline">
-                  + Add Circle
-                </Button>
-                <Button onClick={addLine} className="w-full" variant="outline">
-                  + Add Line
-                </Button>
-                <Button onClick={addImage} className="w-full" variant="outline">
-                  + Add Image
-                </Button>
-                <Button onClick={addQRCodePlaceholder} className="w-full" variant="outline">
-                  + Add QR Code
-                </Button>
-              </CardContent>
+              {!collapsedPanels.elements && (
+                <CardContent className="space-y-2">
+                  <Button onClick={addText} className="w-full" variant="outline">
+                    + Add Text
+                  </Button>
+                  <Button onClick={addRectangle} className="w-full" variant="outline">
+                    + Add Rectangle
+                  </Button>
+                  <Button onClick={addCircle} className="w-full" variant="outline">
+                    + Add Circle
+                  </Button>
+                  <Button onClick={addLine} className="w-full" variant="outline">
+                    + Add Line
+                  </Button>
+                  <Button onClick={addImage} className="w-full" variant="outline">
+                    + Add Image
+                  </Button>
+                  <Button onClick={addQRCodePlaceholder} className="w-full" variant="outline">
+                    + Add QR Code
+                  </Button>
+                </CardContent>
+              )}
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Variables</CardTitle>
+            <Card className={darkMode ? 'bg-gray-800 border-gray-700' : ''}>
+              <CardHeader className="cursor-pointer" onClick={() => togglePanel('variables')}>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Variables</CardTitle>
+                  <span className="text-sm">{collapsedPanels.variables ? '▼' : '▲'}</span>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-2">
+              {!collapsedPanels.variables && (
+                <CardContent className="space-y-2">
                 <div className="text-xs font-semibold text-gray-600 mb-2">Standard Variables</div>
                 <div className="space-y-1">
                   <Button
@@ -748,13 +783,18 @@ export default function HtmlBuilderPage() {
                   </div>
                 </div>
               </CardContent>
+              )}
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Alignment</CardTitle>
+            <Card className={darkMode ? 'bg-gray-800 border-gray-700' : ''}>
+              <CardHeader className="cursor-pointer" onClick={() => togglePanel('alignment')}>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Alignment</CardTitle>
+                  <span className="text-sm">{collapsedPanels.alignment ? '▼' : '▲'}</span>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              {!collapsedPanels.alignment && (
+                <CardContent className="space-y-3">
                 <div>
                   <div className="text-xs font-semibold text-gray-600 mb-1">Horizontal</div>
                   <div className="grid grid-cols-3 gap-1">
@@ -784,13 +824,18 @@ export default function HtmlBuilderPage() {
                   </div>
                 </div>
               </CardContent>
+              )}
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Layer</CardTitle>
+            <Card className={darkMode ? 'bg-gray-800 border-gray-700' : ''}>
+              <CardHeader className="cursor-pointer" onClick={() => togglePanel('layer')}>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Layer</CardTitle>
+                  <span className="text-sm">{collapsedPanels.layer ? '▼' : '▲'}</span>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-2">
+              {!collapsedPanels.layer && (
+                <CardContent className="space-y-2">
                 <Button onClick={bringToFront} variant="outline" className="w-full" size="sm" disabled={!selectedObject}>
                   Bring to Front
                 </Button>
@@ -801,13 +846,18 @@ export default function HtmlBuilderPage() {
                   Duplicate
                 </Button>
               </CardContent>
+              )}
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Canvas</CardTitle>
+            <Card className={darkMode ? 'bg-gray-800 border-gray-700' : ''}>
+              <CardHeader className="cursor-pointer" onClick={() => togglePanel('canvas')}>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Canvas</CardTitle>
+                  <span className="text-sm">{collapsedPanels.canvas ? '▼' : '▲'}</span>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-2">
+              {!collapsedPanels.canvas && (
+                <CardContent className="space-y-2">
                 <div className="space-y-2">
                   <Label>Canvas Size</Label>
                   <div className="grid grid-cols-2 gap-2">
@@ -938,22 +988,23 @@ export default function HtmlBuilderPage() {
                   Clear Canvas
                 </Button>
               </CardContent>
+              )}
             </Card>
           </div>
 
           {/* Center - Canvas */}
           <div className="flex-1 flex flex-col min-w-0">
-            <Card className="h-full flex flex-col">
+            <Card className={`h-full flex flex-col ${darkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Design Area</CardTitle>
-                  <div className="text-xs text-gray-600">
+                  <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     {canvasWidth}×{canvasHeight} • {Math.round(canvasScale * 100)}% • {canvas?.getObjects().length || 0} objects
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col min-h-0">
-                <div className="flex-1 relative border-2 border-gray-300 bg-gray-100 rounded-lg shadow-inner overflow-auto">
+                <div className={`flex-1 relative border-2 ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'} rounded-lg shadow-inner overflow-auto`}>
                   {showRulers && (
                     <>
                       {/* Horizontal ruler */}
@@ -1021,11 +1072,15 @@ export default function HtmlBuilderPage() {
           {/* Right Sidebar - Properties */}
           <div className="w-80 flex-shrink-0 overflow-y-auto space-y-4 pl-2"
             style={{ scrollbarWidth: 'thin' }}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Properties</CardTitle>
+            <Card className={darkMode ? 'bg-gray-800 border-gray-700' : ''}>
+              <CardHeader className="cursor-pointer" onClick={() => togglePanel('properties')}>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Properties</CardTitle>
+                  <span className="text-sm">{collapsedPanels.properties ? '▼' : '▲'}</span>
+                </div>
               </CardHeader>
-              <CardContent>
+              {!collapsedPanels.properties && (
+                <CardContent>
                 {selectedObject ? (
                   <div className="space-y-4">
                     {(selectedObject.type === "text" || selectedObject.type === "i-text") && (
@@ -1117,18 +1172,23 @@ export default function HtmlBuilderPage() {
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-600">
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     Select an element to edit its properties
                   </p>
                 )}
               </CardContent>
+              )}
             </Card>
 
-            <Card className="mt-4">
-              <CardHeader>
-                <CardTitle className="text-lg">Layers</CardTitle>
+            <Card className={darkMode ? 'bg-gray-800 border-gray-700' : ''}>
+              <CardHeader className="cursor-pointer" onClick={() => togglePanel('layers')}>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Layers</CardTitle>
+                  <span className="text-sm">{collapsedPanels.layers ? '▼' : '▲'}</span>
+                </div>
               </CardHeader>
-              <CardContent>
+              {!collapsedPanels.layers && (
+                <CardContent>
                 <div className="space-y-1 max-h-60 overflow-y-auto">
                   {layers.length === 0 ? (
                     <p className="text-sm text-gray-600">No layers yet</p>
@@ -1196,23 +1256,29 @@ export default function HtmlBuilderPage() {
                   )}
                 </div>
               </CardContent>
+              )}
             </Card>
 
-            <Card className="mt-4">
-              <CardHeader>
-                <CardTitle className="text-lg">Keyboard Shortcuts</CardTitle>
+            <Card className={darkMode ? 'bg-gray-800 border-gray-700' : ''}>
+              <CardHeader className="cursor-pointer" onClick={() => togglePanel('shortcuts')}>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Keyboard Shortcuts</CardTitle>
+                  <span className="text-sm">{collapsedPanels.shortcuts ? '▼' : '▲'}</span>
+                </div>
               </CardHeader>
-              <CardContent>
+              {!collapsedPanels.shortcuts && (
+                <CardContent>
                 <div className="text-sm text-gray-600 space-y-1">
-                  <p>• <kbd className="px-1 bg-gray-200 rounded">Ctrl/Cmd+Z</kbd> Undo</p>
-                  <p>• <kbd className="px-1 bg-gray-200 rounded">Ctrl/Cmd+Shift+Z</kbd> Redo</p>
-                  <p>• <kbd className="px-1 bg-gray-200 rounded">Ctrl/Cmd+D</kbd> Duplicate</p>
-                  <p>• <kbd className="px-1 bg-gray-200 rounded">Ctrl/Cmd+S</kbd> Save</p>
-                  <p>• <kbd className="px-1 bg-gray-200 rounded">Delete</kbd> Delete selected</p>
+                  <p>• <kbd className={`px-1 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded`}>Ctrl/Cmd+Z</kbd> Undo</p>
+                  <p>• <kbd className={`px-1 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded`}>Ctrl/Cmd+Shift+Z</kbd> Redo</p>
+                  <p>• <kbd className={`px-1 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded`}>Ctrl/Cmd+D</kbd> Duplicate</p>
+                  <p>• <kbd className={`px-1 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded`}>Ctrl/Cmd+S</kbd> Save</p>
+                  <p>• <kbd className={`px-1 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded`}>Delete</kbd> Delete selected</p>
                   <p>• Double-click text to edit inline</p>
                   <p>• Drag to move, corners to resize</p>
                 </div>
               </CardContent>
+              )}
             </Card>
           </div>
         </div>
