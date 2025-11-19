@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 interface FieldMapping {
   id: string
@@ -19,7 +20,19 @@ interface FieldMapping {
   fontSize: number
   fontFamily: string
   color: string
-  type: "text" | "image" | "qr"
+  type: "text" | "image" | "qr" | "date" | "number" | "checkbox" | "dropdown"
+  validation?: {
+    required?: boolean
+    minLength?: number
+    maxLength?: number
+    pattern?: string
+  }
+  conditional?: {
+    showIf?: string
+    hideIf?: string
+  }
+  options?: string[] // For dropdown
+  defaultValue?: any
 }
 
 export default function PdfMapperPage() {
@@ -34,6 +47,9 @@ export default function PdfMapperPage() {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [uploadingBg, setUploadingBg] = useState(false)
+  const [canvasScale, setCanvasScale] = useState(1)
+  const [gridEnabled, setGridEnabled] = useState(false)
+  const [gridSize, setGridSize] = useState(10)
   const imageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -108,23 +124,48 @@ export default function PdfMapperPage() {
     }
   }
 
-  const addField = (type: "text" | "image" | "qr") => {
+  const addField = (type: FieldMapping["type"]) => {
     const newField: FieldMapping = {
       id: `field-${Date.now()}`,
       name: `${type}_${fields.length + 1}`,
       label: `${type.charAt(0).toUpperCase() + type.slice(1)} Field ${fields.length + 1}`,
       x: 100,
       y: 100,
-      width: type === "qr" ? 100 : 200,
-      height: type === "qr" ? 100 : 30,
+      width: type === "qr" || type === "checkbox" ? 100 : 200,
+      height: type === "qr" || type === "checkbox" ? 100 : type === "dropdown" ? 40 : 30,
       fontSize: 16,
       fontFamily: "Arial",
       color: "#000000",
       type: type,
+      validation: {
+        required: false,
+      },
+      options: type === "dropdown" ? ["Option 1", "Option 2", "Option 3"] : undefined,
     }
 
     setFields([...fields, newField])
     setSelectedField(newField)
+  }
+
+  const duplicateField = (fieldId: string) => {
+    const field = fields.find(f => f.id === fieldId)
+    if (!field) return
+
+    const newField: FieldMapping = {
+      ...field,
+      id: `field-${Date.now()}`,
+      name: `${field.name}_copy`,
+      x: field.x + 20,
+      y: field.y + 20,
+    }
+
+    setFields([...fields, newField])
+    setSelectedField(newField)
+  }
+
+  const snapToGrid = (value: number) => {
+    if (!gridEnabled) return value
+    return Math.round(value / gridSize) * gridSize
   }
 
   const updateField = (fieldId: string, updates: Partial<FieldMapping>) => {
@@ -152,14 +193,34 @@ export default function PdfMapperPage() {
     if (!isDragging || !selectedField || !imageRef.current) return
 
     const rect = imageRef.current.getBoundingClientRect()
-    const x = Math.max(0, Math.min(e.clientX - rect.left - dragStart.x, rect.width - selectedField.width))
-    const y = Math.max(0, Math.min(e.clientY - rect.top - dragStart.y, rect.height - selectedField.height))
+    let x = e.clientX - rect.left - dragStart.x
+    let y = e.clientY - rect.top - dragStart.y
+
+    // Apply grid snapping
+    x = snapToGrid(x)
+    y = snapToGrid(y)
+
+    // Constrain to canvas bounds
+    x = Math.max(0, Math.min(x, rect.width - selectedField.width))
+    y = Math.max(0, Math.min(y, rect.height - selectedField.height))
 
     updateField(selectedField.id, { x, y })
   }
 
   const handleMouseUp = () => {
     setIsDragging(false)
+  }
+
+  const zoomIn = () => {
+    setCanvasScale(Math.min(canvasScale + 0.1, 2))
+  }
+
+  const zoomOut = () => {
+    setCanvasScale(Math.max(canvasScale - 0.1, 0.5))
+  }
+
+  const resetZoom = () => {
+    setCanvasScale(1)
   }
 
   const saveTemplate = async () => {
@@ -261,12 +322,70 @@ export default function PdfMapperPage() {
                 <Button onClick={() => addField("text")} className="w-full" variant="outline">
                   + Add Text Field
                 </Button>
+                <Button onClick={() => addField("number")} className="w-full" variant="outline">
+                  + Add Number Field
+                </Button>
+                <Button onClick={() => addField("date")} className="w-full" variant="outline">
+                  + Add Date Field
+                </Button>
+                <Button onClick={() => addField("checkbox")} className="w-full" variant="outline">
+                  + Add Checkbox
+                </Button>
+                <Button onClick={() => addField("dropdown")} className="w-full" variant="outline">
+                  + Add Dropdown
+                </Button>
                 <Button onClick={() => addField("image")} className="w-full" variant="outline">
                   + Add Image Field
                 </Button>
                 <Button onClick={() => addField("qr")} className="w-full" variant="outline">
                   + Add QR Code
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="text-lg">Canvas Controls</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Zoom: {Math.round(canvasScale * 100)}%</Label>
+                  <div className="grid grid-cols-3 gap-1">
+                    <Button onClick={zoomOut} variant="outline" size="sm">
+                      −
+                    </Button>
+                    <Button onClick={resetZoom} variant="outline" size="sm">
+                      100%
+                    </Button>
+                    <Button onClick={zoomIn} variant="outline" size="sm">
+                      +
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Grid Snap</Label>
+                    <input
+                      type="checkbox"
+                      checked={gridEnabled}
+                      onChange={(e) => setGridEnabled(e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  {gridEnabled && (
+                    <div className="space-y-2">
+                      <Label>Grid Size: {gridSize}px</Label>
+                      <Input
+                        type="range"
+                        min="5"
+                        max="50"
+                        step="5"
+                        value={gridSize}
+                        onChange={(e) => setGridSize(Number(e.target.value))}
+                      />
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
@@ -289,16 +408,30 @@ export default function PdfMapperPage() {
                       >
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium">{field.label}</span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              deleteField(field.id)
-                            }}
-                          >
-                            ×
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                duplicateField(field.id)
+                              }}
+                              className="px-2 text-xs"
+                            >
+                              ⎘
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                deleteField(field.id)
+                              }}
+                              className="px-2"
+                            >
+                              ×
+                            </Button>
+                          </div>
                         </div>
                         <div className="text-xs text-gray-600 mt-1">
                           {field.type} • {Math.round(field.x)}, {Math.round(field.y)}
@@ -326,6 +459,7 @@ export default function PdfMapperPage() {
                     <div
                       ref={imageRef}
                       className="relative inline-block"
+                      style={{ transform: `scale(${canvasScale})`, transformOrigin: 'top left' }}
                       onMouseMove={handleMouseMove}
                       onMouseUp={handleMouseUp}
                       onMouseLeave={handleMouseUp}
@@ -336,6 +470,17 @@ export default function PdfMapperPage() {
                         className="max-w-full"
                         draggable={false}
                       />
+                      {gridEnabled && (
+                        <div 
+                          className="absolute inset-0 pointer-events-none"
+                          style={{
+                            backgroundImage: `
+                              repeating-linear-gradient(0deg, transparent, transparent ${gridSize-1}px, rgba(0,0,0,0.1) ${gridSize-1}px, rgba(0,0,0,0.1) ${gridSize}px),
+                              repeating-linear-gradient(90deg, transparent, transparent ${gridSize-1}px, rgba(0,0,0,0.1) ${gridSize-1}px, rgba(0,0,0,0.1) ${gridSize}px)
+                            `,
+                          }}
+                        />
+                      )}
                       {fields.map((field) => (
                         <div
                           key={field.id}
@@ -427,7 +572,7 @@ export default function PdfMapperPage() {
                         />
                       </div>
                     </div>
-                    {selectedField.type === "text" && (
+                    {(selectedField.type === "text" || selectedField.type === "number" || selectedField.type === "date") && (
                       <>
                         <div className="space-y-2">
                           <Label>Font Size</Label>
@@ -470,9 +615,90 @@ export default function PdfMapperPage() {
                         </div>
                       </>
                     )}
-                    <Button onClick={() => deleteField(selectedField.id)} variant="outline" className="w-full">
-                      Delete Field
-                    </Button>
+                    
+                    {selectedField.type === "dropdown" && (
+                      <div className="space-y-2">
+                        <Label>Options (one per line)</Label>
+                        <Textarea
+                          value={selectedField.options?.join('\n') || ''}
+                          onChange={(e) => updateField(selectedField.id, { 
+                            options: e.target.value.split('\n').filter(o => o.trim()) 
+                          })}
+                          rows={4}
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="border-t pt-4 space-y-4">
+                      <div className="space-y-2">
+                        <div className="font-semibold text-sm">Validation</div>
+                        <div className="flex items-center justify-between">
+                          <Label>Required</Label>
+                          <input
+                            type="checkbox"
+                            checked={selectedField.validation?.required || false}
+                            onChange={(e) => updateField(selectedField.id, { 
+                              validation: { ...selectedField.validation, required: e.target.checked }
+                            })}
+                            className="w-4 h-4"
+                          />
+                        </div>
+                        {selectedField.type === "text" && (
+                          <>
+                            <div className="space-y-2">
+                              <Label>Min Length</Label>
+                              <Input
+                                type="number"
+                                value={selectedField.validation?.minLength || ''}
+                                onChange={(e) => updateField(selectedField.id, { 
+                                  validation: { ...selectedField.validation, minLength: Number(e.target.value) }
+                                })}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Max Length</Label>
+                              <Input
+                                type="number"
+                                value={selectedField.validation?.maxLength || ''}
+                                onChange={(e) => updateField(selectedField.id, { 
+                                  validation: { ...selectedField.validation, maxLength: Number(e.target.value) }
+                                })}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="font-semibold text-sm">Conditional Display</div>
+                        <div className="space-y-2">
+                          <Label>Show if variable is set</Label>
+                          <Input
+                            placeholder="variableName"
+                            value={selectedField.conditional?.showIf || ''}
+                            onChange={(e) => updateField(selectedField.id, { 
+                              conditional: { ...selectedField.conditional, showIf: e.target.value }
+                            })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Hide if variable is set</Label>
+                          <Input
+                            placeholder="variableName"
+                            value={selectedField.conditional?.hideIf || ''}
+                            onChange={(e) => updateField(selectedField.id, { 
+                              conditional: { ...selectedField.conditional, hideIf: e.target.value }
+                            })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="border-t pt-4">
+                      <Button onClick={() => deleteField(selectedField.id)} variant="outline" className="w-full">
+                        Delete Field
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <p className="text-sm text-gray-600">
