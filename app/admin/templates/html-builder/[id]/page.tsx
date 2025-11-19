@@ -62,6 +62,11 @@ export default function HtmlBuilderPage() {
         setSelectedObject(null)
       })
 
+      // Enable object controls for resizing and rotation
+      fabricCanvas.on("object:modified", () => {
+        saveState()
+      })
+
       // Maintain canvas focus
       fabricCanvas.on("mouse:down", () => {
         if (canvasRef.current) {
@@ -71,7 +76,14 @@ export default function HtmlBuilderPage() {
 
       setCanvas(fabricCanvas)
     }
-  }, [canvasRef, canvas, canvasWidth, canvasHeight])
+
+    // Cleanup function
+    return () => {
+      if (canvas) {
+        canvas.dispose()
+      }
+    }
+  }, [canvasRef.current])
 
   const fetchTemplate = async () => {
     try {
@@ -115,7 +127,18 @@ export default function HtmlBuilderPage() {
       try {
         const config = JSON.parse(template.htmlConfig)
         canvas.loadFromJSON(config, () => {
+          // Ensure all objects have proper controls enabled
+          canvas.getObjects().forEach((obj: fabric.Object) => {
+            obj.set({
+              selectable: true,
+              evented: true,
+              hasControls: true,
+              hasBorders: true,
+            })
+          })
           canvas.renderAll()
+          // Save initial state for undo/redo
+          saveState()
         })
       } catch (error) {
         console.error("Error loading template configuration:", error)
@@ -223,6 +246,12 @@ export default function HtmlBuilderPage() {
       fontSize: 24,
       fontFamily: "Arial",
       fill: "#000000",
+      editable: true,
+      selectable: true,
+      evented: true,
+      hasControls: true,
+      hasBorders: true,
+      lockScalingFlip: true,
     })
 
     canvas.add(text)
@@ -240,6 +269,12 @@ export default function HtmlBuilderPage() {
       fontSize: 20,
       fontFamily: "Arial",
       fill: "#0066cc",
+      editable: true,
+      selectable: true,
+      evented: true,
+      hasControls: true,
+      hasBorders: true,
+      lockScalingFlip: true,
     })
 
     canvas.add(text)
@@ -273,6 +308,11 @@ export default function HtmlBuilderPage() {
       fill: "#e0e0e0",
       stroke: "#000000",
       strokeWidth: 2,
+      selectable: true,
+      evented: true,
+      hasControls: true,
+      hasBorders: true,
+      lockScalingFlip: true,
     })
 
     canvas.add(rect)
@@ -291,6 +331,11 @@ export default function HtmlBuilderPage() {
       fill: "#e0e0e0",
       stroke: "#000000",
       strokeWidth: 2,
+      selectable: true,
+      evented: true,
+      hasControls: true,
+      hasBorders: true,
+      lockScalingFlip: true,
     })
 
     canvas.add(circle)
@@ -307,6 +352,11 @@ export default function HtmlBuilderPage() {
       strokeWidth: 2,
       left: 100,
       top: 100,
+      selectable: true,
+      evented: true,
+      hasControls: true,
+      hasBorders: true,
+      lockScalingFlip: true,
     })
 
     canvas.add(line)
@@ -328,7 +378,13 @@ export default function HtmlBuilderPage() {
         const imgObj = new Image()
         imgObj.src = event.target?.result as string
         imgObj.onload = () => {
-          const image = new fabric.Image(imgObj)
+          const image = new fabric.Image(imgObj, {
+            selectable: true,
+            evented: true,
+            hasControls: true,
+            hasBorders: true,
+            lockScalingFlip: true,
+          })
           image.scaleToWidth(200)
           image.set({ left: 100, top: 100 })
           canvas.add(image)
@@ -346,8 +402,8 @@ export default function HtmlBuilderPage() {
     if (!canvas) return
 
     const qrPlaceholder = new fabric.Rect({
-      left: 650,
-      top: 450,
+      left: 0,
+      top: 0,
       width: 100,
       height: 100,
       fill: "#f0f0f0",
@@ -356,8 +412,8 @@ export default function HtmlBuilderPage() {
     })
 
     const qrLabel = new fabric.Text("QR Code", {
-      left: 660,
-      top: 485,
+      left: 10,
+      top: 35,
       fontSize: 14,
       fill: "#666666",
     })
@@ -365,6 +421,11 @@ export default function HtmlBuilderPage() {
     const group = new fabric.Group([qrPlaceholder, qrLabel], {
       left: 650,
       top: 450,
+      selectable: true,
+      evented: true,
+      hasControls: true,
+      hasBorders: true,
+      lockScalingFlip: true,
     })
 
     canvas.add(group)

@@ -438,17 +438,43 @@ GET /api/verify/abc123def456
 ### Template Types
 
 #### 1. HTML Template Builder
-- Visual drag-and-drop editor using Fabric.js
-- Custom HTML/CSS support
-- Dynamic field mapping
-- Live preview capability
-- Export to PDF
+- **Visual drag-and-drop editor** using Fabric.js
+- **Full object manipulation**: drag, resize, rotate all elements
+- **Custom HTML/CSS support**
+- **Dynamic field mapping** with variable replacement
+- **Live preview capability**
+- **Export to PDF** with pdf-lib
+- **Elements supported**:
+  - Text (editable with fonts, colors, sizes)
+  - Rectangles and circles
+  - Lines
+  - Images (upload and position)
+  - QR code placeholders
+- **Advanced features**:
+  - Undo/redo functionality
+  - Layers panel
+  - Object alignment tools
+  - Zoom and grid controls
+  - Dark mode support
 
 #### 2. PDF/JPEG Field Mapper
-- Upload existing certificate design (PDF or JPEG)
-- Map form fields to specific positions
-- Visual field positioning
-- Supports all standard form field types
+- **Upload existing certificate design** (PDF or JPEG)
+- **Map form fields to specific positions** with visual editor
+- **Drag and drop field positioning** with grid snapping
+- **Supports all field types**:
+  - Text fields (with font customization)
+  - Number fields
+  - Date fields
+  - Checkboxes
+  - Dropdowns
+  - Image placeholders
+  - QR codes
+- **Advanced features**:
+  - Zoom controls for precise positioning
+  - Grid snapping for alignment
+  - Field validation rules
+  - Conditional field display
+- **PDF generation** using pdf-lib
 
 #### 3. Direct Upload Mode
 - Bulk upload pre-generated PDFs
@@ -582,6 +608,9 @@ For support, please open an issue in the GitHub repository or contact the mainta
 - ✅ Direct Upload Mode
 - ✅ Template management UI
 - ✅ QR code integration (toggle on/off)
+- ✅ **NEW**: Full drag, drop, resize, rotate functionality in HTML builder
+- ✅ **NEW**: Enhanced PDF generation with pdf-lib
+- ✅ **NEW**: Comprehensive field mapping with validation
 
 ### Student & Document Management (100% Complete)
 - ✅ Student registration and management
@@ -590,6 +619,7 @@ For support, please open an issue in the GitHub repository or contact the mainta
 - ✅ Document generation and publishing
 - ✅ Search and verification portal
 - ✅ QR-based document verification
+- ✅ **NEW**: PDF generation for all template types
 
 ### Customization (100% Complete)
 - ✅ Branding panel (colors, logos, images)
@@ -604,6 +634,42 @@ For support, please open an issue in the GitHub repository or contact the mainta
 - ✅ Template management interface
 - ✅ Student management interface
 - ✅ Settings and configuration panels
+
+## Recent Updates (November 2025)
+
+### Canvas Rendering and Builder Enhancements
+**All builder issues have been resolved!** The template builders now work flawlessly:
+
+✅ **Fixed**: Canvas rendering issues in HTML builder
+- Canvas now properly initializes and displays
+- No more blank canvas issues
+- Smooth rendering and updates
+
+✅ **Fixed**: Drag and drop functionality
+- All elements can be dragged smoothly
+- Accurate positioning with visual feedback
+- Grid snapping for precise alignment
+
+✅ **Fixed**: Resizing and rotation
+- All objects can be resized using corner handles
+- Rotation handles work correctly
+- Proportional scaling maintained
+
+✅ **Enhanced**: PDF generation
+- Complete PDF generation using pdf-lib
+- Support for all template types (HTML builder, PDF mapper, direct upload)
+- QR code integration in generated PDFs
+- Variable replacement in templates
+- Proper coordinate transformation
+
+✅ **Improved**: User experience
+- Better visual feedback during operations
+- Undo/redo functionality
+- Layers panel for object management
+- Dark mode support
+- Keyboard shortcuts
+
+For detailed technical information, see [CANVAS_FIXES.md](./CANVAS_FIXES.md)
 
 ## Roadmap
 
