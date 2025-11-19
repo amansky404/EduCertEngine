@@ -1,8 +1,20 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { headers } from "next/headers"
+import UniversityLandingPage from "@/components/UniversityLandingPage"
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Get subdomain from headers
+  const headersList = await headers()
+  const subdomain = headersList.get('x-subdomain')
+
+  // If subdomain exists, show university-specific landing page
+  if (subdomain) {
+    return <UniversityLandingPage subdomain={subdomain} />
+  }
+
+  // Otherwise show main platform landing page
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Header */}

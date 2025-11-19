@@ -1345,8 +1345,7 @@ export default function HtmlBuilderPage() {
                         className="shadow-lg" 
                         style={{ 
                           border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          backgroundColor: '#fff'
+                          borderRadius: '4px'
                         }}
                       />
                     </div>
