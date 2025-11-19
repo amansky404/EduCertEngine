@@ -82,7 +82,6 @@ export function HtmlEditor({
     "background",
     "script",
     "list",
-    "bullet",
     "indent",
     "align",
     "blockquote",
