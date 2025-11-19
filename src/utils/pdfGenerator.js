@@ -14,31 +14,32 @@ exports.generatePDF = async (certificate, template) => {
     const page = pdfDoc.addPage([template.dimensions.width, template.dimensions.height]);
     
     // Load background if exists
-    if (template.backgroundPDF) {
+    if (template.backgroundUrl) {
       try {
-        const bgPath = path.join(process.cwd(), 'public', template.backgroundPDF);
-        const bgBytes = await fs.readFile(bgPath);
-        const bgPdf = await PDFDocument.load(bgBytes);
-        const [bgPage] = await pdfDoc.copyPages(bgPdf, [0]);
-        page.drawPage(bgPage);
-      } catch (error) {
-        console.error('Failed to load background PDF:', error.message);
-      }
-    } else if (template.backgroundImage) {
-      try {
-        const bgPath = path.join(process.cwd(), 'public', template.backgroundImage);
+        const bgPath = path.join(process.cwd(), 'public', template.backgroundUrl);
         const bgBytes = await fs.readFile(bgPath);
         
-        // Determine image type and embed
-        let bgImage;
-        const ext = path.extname(template.backgroundImage).toLowerCase();
-        if (ext === '.png') {
-          bgImage = await pdfDoc.embedPng(bgBytes);
+        // Determine file type and handle accordingly
+        const ext = path.extname(template.backgroundUrl).toLowerCase();
+        
+        if (ext === '.pdf') {
+          // Load PDF background
+          const bgPdf = await PDFDocument.load(bgBytes);
+          const [bgPage] = await pdfDoc.copyPages(bgPdf, [0]);
+          page.drawPage(bgPage);
+        } else if (ext === '.png') {
+          // Load PNG background
+          const bgImage = await pdfDoc.embedPng(bgBytes);
+          const { width, height } = page.getSize();
+          page.drawImage(bgImage, {
+            x: 0,
+            y: 0,
+            width,
+            height,
+          });
         } else if (['.jpg', '.jpeg'].includes(ext)) {
-          bgImage = await pdfDoc.embedJpg(bgBytes);
-        }
-        
-        if (bgImage) {
+          // Load JPEG background
+          const bgImage = await pdfDoc.embedJpg(bgBytes);
           const { width, height } = page.getSize();
           page.drawImage(bgImage, {
             x: 0,
@@ -48,7 +49,7 @@ exports.generatePDF = async (certificate, template) => {
           });
         }
       } catch (error) {
-        console.error('Failed to load background image:', error.message);
+        console.error('Failed to load background:', error.message);
       }
     }
     
