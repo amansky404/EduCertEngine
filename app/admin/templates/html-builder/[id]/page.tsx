@@ -51,6 +51,7 @@ export default function RichTextBuilderPage() {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[500px] p-8',
       },
     },
+    immediatelyRender: false,
   })
 
   useEffect(() => {
