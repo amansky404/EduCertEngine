@@ -48,6 +48,28 @@ export async function GET(request: NextRequest) {
           },
         },
       })
+    } else if (type === 'reg') {
+      student = await prisma.student.findFirst({
+        where: {
+          universityId: university.id,
+          regNo: value,
+        },
+        include: {
+          documents: {
+            where: {
+              isPublished: true,
+            },
+            include: {
+              template: {
+                select: {
+                  name: true,
+                  type: true,
+                },
+              },
+            },
+          },
+        },
+      })
     } else if (type === 'mobile') {
       student = await prisma.student.findFirst({
         where: {
