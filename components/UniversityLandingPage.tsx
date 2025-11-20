@@ -86,7 +86,7 @@ export default async function UniversityLandingPage({ subdomain }: UniversityLan
           </div>
           <nav className="hidden md:flex space-x-6">
             <Link href="/" className="text-gray-600 hover:text-gray-900">Home</Link>
-            <Link href="/result" className="text-gray-600 hover:text-gray-900">Search Documents</Link>
+            <Link href="/search" className="text-gray-600 hover:text-gray-900">Search Documents</Link>
             <Link href="/verify" className="text-gray-600 hover:text-gray-900">Verify</Link>
           </nav>
           <div className="space-x-4">
@@ -124,7 +124,7 @@ export default async function UniversityLandingPage({ subdomain }: UniversityLan
            "Access your academic documents, certificates, and marksheets online"}
         </p>
         <div className="space-x-4">
-          <Link href="/result">
+          <Link href="/search">
             <Button 
               size="lg" 
               className="text-lg px-8"
@@ -164,7 +164,7 @@ export default async function UniversityLandingPage({ subdomain }: UniversityLan
               <p className="text-sm text-gray-600 mb-4">
                 Search using your roll number, registration number, mobile number, or date of birth.
               </p>
-              <Link href="/result">
+              <Link href="/search">
                 <Button 
                   className="w-full"
                   style={{ backgroundColor: university.primaryColor }}
@@ -212,7 +212,7 @@ export default async function UniversityLandingPage({ subdomain }: UniversityLan
               <p className="text-sm text-gray-600 mb-4">
                 Download your documents in PDF format and print them whenever needed.
               </p>
-              <Link href="/result">
+              <Link href="/search">
                 <Button 
                   variant="outline"
                   className="w-full"
@@ -264,7 +264,7 @@ export default async function UniversityLandingPage({ subdomain }: UniversityLan
               <h4 className="font-bold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-sm text-gray-300">
                 <li><Link href="/" className="hover:text-white">Home</Link></li>
-                <li><Link href="/result" className="hover:text-white">Search Documents</Link></li>
+                <li><Link href="/search" className="hover:text-white">Search Documents</Link></li>
                 <li><Link href="/verify" className="hover:text-white">Verify</Link></li>
               </ul>
             </div>

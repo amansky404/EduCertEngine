@@ -30,7 +30,10 @@ A comprehensive Multi-University Certificate & Marksheet Management Platform bui
 - **Document Publishing**: Control document visibility and publication status
 
 ### 🔍 Student Portal & Verification
+- **Enhanced Search Portal**: Modern, user-friendly document search interface at `/search`
 - **Search Functionality**: Search by roll number, registration number, mobile, or date of birth
+- **Document Generation Module**: Integrated document viewing and downloading capabilities
+- **Student Dashboard**: View all available documents with status indicators
 - **Secure Verification**: Verify documents using unique QR hash codes
 - **Public Access**: Students can view and download their documents without login
 - **Print Support**: Optimized for printing documents
@@ -338,8 +341,9 @@ EduCertEngine/
 │   │   ├── student/         # Student operations
 │   │   ├── csv/            # CSV configuration
 │   │   └── verify/          # Document verification
+│   ├── search/              # Student document search portal
 │   ├── verify/              # Public verification pages
-│   └── result/              # Student result pages
+│   └── result/              # Legacy student result pages (use /search instead)
 ├── components/              # React components
 │   └── ui/                 # UI components
 ├── lib/                     # Utility libraries
