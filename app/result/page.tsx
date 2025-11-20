@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 export default function StudentPortalPage() {
-  const [searchType, setSearchType] = useState<"roll" | "mobile" | "dob">("roll")
+  const [searchType, setSearchType] = useState<"roll" | "reg" | "mobile" | "dob">("roll")
   const [searchValue, setSearchValue] = useState("")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
@@ -41,6 +41,16 @@ export default function StudentPortalPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      {/* Deprecation Notice */}
+      <div className="bg-yellow-50 border-b border-yellow-200">
+        <div className="container mx-auto px-4 py-3">
+          <p className="text-center text-sm text-yellow-800">
+            ⚠️ <strong>Legacy Page:</strong> This page is maintained for backward compatibility. 
+            Please use the <a href="/search" className="underline font-semibold hover:text-yellow-900">enhanced search portal</a> for the best experience.
+          </p>
+        </div>
+      </div>
+      
       {/* Header */}
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-6">
@@ -66,7 +76,7 @@ export default function StudentPortalPage() {
                 {/* Search Type Selection */}
                 <div className="space-y-2">
                   <Label>Search By</Label>
-                  <div className="flex space-x-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     <button
                       type="button"
                       onClick={() => setSearchType("roll")}
@@ -77,6 +87,17 @@ export default function StudentPortalPage() {
                       }`}
                     >
                       Roll Number
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSearchType("reg")}
+                      className={`px-4 py-2 rounded border ${
+                        searchType === "reg"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white text-gray-700 border-gray-300"
+                      }`}
+                    >
+                      Reg Number
                     </button>
                     <button
                       type="button"
@@ -107,6 +128,7 @@ export default function StudentPortalPage() {
                 <div className="space-y-2">
                   <Label htmlFor="searchValue">
                     {searchType === "roll" && "Roll Number"}
+                    {searchType === "reg" && "Registration Number"}
                     {searchType === "mobile" && "Mobile Number"}
                     {searchType === "dob" && "Date of Birth"}
                   </Label>
@@ -118,6 +140,8 @@ export default function StudentPortalPage() {
                     placeholder={
                       searchType === "roll"
                         ? "Enter your roll number"
+                        : searchType === "reg"
+                        ? "Enter your registration number"
                         : searchType === "mobile"
                         ? "Enter your mobile number"
                         : "Select your date of birth"
