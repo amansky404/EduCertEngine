@@ -2,6 +2,17 @@
 
 A comprehensive Multi-University Certificate & Marksheet Management Platform built with **Next.js 14** and **Prisma**. Features dynamic subdomains, custom landing pages, multiple template types (HTML Builder, PDF/JPEG Mapper, Direct Upload), advanced CSV management, QR verification, SEO configuration, and student search portal.
 
+## 🚀 Quick Links
+
+**New to EduCertEngine?** Start here:
+- 📖 [HOW_TO_RUN.md](./HOW_TO_RUN.md) - Get the application running in 5 minutes
+- 👨‍🎓 [STUDENT_GUIDE.md](./STUDENT_GUIDE.md) - How students access their certificates
+- 📜 [CERTIFICATE_GENERATION_GUIDE.md](./CERTIFICATE_GENERATION_GUIDE.md) - Create and issue certificates
+- 🔄 [FLOW_DIAGRAM.md](./FLOW_DIAGRAM.md) - Understand how the system works
+
+**For Administrators:**
+- [Setup Guide](./SETUP.md) | [Deployment](./DEPLOYMENT.md) | [API Reference](./API_ENDPOINTS.md)
+
 ## Features
 
 ### 🏫 Multi-Tenancy & Subdomain Management
@@ -753,7 +764,18 @@ For detailed technical information, see [CANVAS_FIXES.md](./CANVAS_FIXES.md)
 ---
 
 For more detailed documentation, see:
+
+### 📖 Getting Started
+- [HOW_TO_RUN.md](./HOW_TO_RUN.md) - **Quick start guide to run the application**
 - [SETUP.md](./SETUP.md) - Detailed setup instructions
+- [QUICKSTART.md](./QUICKSTART.md) - 5-minute quick start
+
+### 📚 User Guides
+- [STUDENT_GUIDE.md](./STUDENT_GUIDE.md) - **How students can access and use certificates**
+- [CERTIFICATE_GENERATION_GUIDE.md](./CERTIFICATE_GENERATION_GUIDE.md) - **Complete guide to generating certificates**
+- [FLOW_DIAGRAM.md](./FLOW_DIAGRAM.md) - **System flow and working diagrams**
+
+### 🛠️ Technical Documentation
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture details
 - [API_ENDPOINTS.md](./API_ENDPOINTS.md) - Complete API reference
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Production deployment guide
