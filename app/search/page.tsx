@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { FileText, Download, Eye, CheckCircle } from "lucide-react"
 
 export default function StudentSearchPage() {
-  const [searchType, setSearchType] = useState<"roll" | "mobile" | "dob">("roll")
+  const [searchType, setSearchType] = useState<"roll" | "reg" | "mobile" | "dob">("roll")
   const [searchValue, setSearchValue] = useState("")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
@@ -97,7 +97,7 @@ export default function StudentSearchPage() {
                 {/* Search Type Selection */}
                 <div className="space-y-3">
                   <Label className="text-base font-semibold">Search By</Label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <button
                       type="button"
                       onClick={() => setSearchType("roll")}
@@ -108,6 +108,17 @@ export default function StudentSearchPage() {
                       }`}
                     >
                       Roll Number
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSearchType("reg")}
+                      className={`px-4 py-3 rounded-lg border-2 font-medium transition-all ${
+                        searchType === "reg"
+                          ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                      }`}
+                    >
+                      Reg Number
                     </button>
                     <button
                       type="button"
@@ -138,6 +149,7 @@ export default function StudentSearchPage() {
                 <div className="space-y-2">
                   <Label htmlFor="searchValue" className="text-base font-semibold">
                     {searchType === "roll" && "Roll Number"}
+                    {searchType === "reg" && "Registration Number"}
                     {searchType === "mobile" && "Mobile Number"}
                     {searchType === "dob" && "Date of Birth"}
                   </Label>
@@ -149,6 +161,8 @@ export default function StudentSearchPage() {
                     placeholder={
                       searchType === "roll"
                         ? "Enter your roll number"
+                        : searchType === "reg"
+                        ? "Enter your registration number"
                         : searchType === "mobile"
                         ? "Enter your mobile number"
                         : "Select your date of birth"
