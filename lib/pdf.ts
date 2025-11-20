@@ -115,7 +115,9 @@ export async function generatePDFFromHTML(options: PDFGenerationOptions): Promis
 /**
  * Generate PDF using PDFKit
  * Note: Requires pdfkit to be installed
+ * DEPRECATED: Not used in current implementation
  */
+/*
 export async function generatePDFWithPDFKit(options: PDFGenerationOptions): Promise<string> {
   const { templateData, qrCode, outputPath } = options
   
@@ -167,6 +169,7 @@ export async function generatePDFWithPDFKit(options: PDFGenerationOptions): Prom
     }
   })
 }
+*/
 
 /**
  * Generate PDF from field mapper template using pdf-lib

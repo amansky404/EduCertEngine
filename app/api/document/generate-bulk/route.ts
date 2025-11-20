@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { verifyToken, extractToken } from '@/lib/auth'
 import { generateQRCode } from '@/lib/qr'
+import { generatePDFFromHTML, generatePDFFromCanvas, generatePDFFromMapper, mergeTemplateVariables } from '@/lib/pdf'
 import crypto from 'crypto'
+import path from 'path'
+import fs from 'fs'
 
 export async function POST(request: NextRequest) {
   try {
@@ -123,6 +126,104 @@ export async function POST(request: NextRequest) {
             }),
           },
         })
+
+        // Generate actual PDF
+        try {
+          const outputDir = path.join(process.cwd(), 'public', 'uploads', 'documents')
+          if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true })
+          }
+
+          const fileName = `${document.id}.pdf`
+          const outputPath = path.join(outputDir, fileName)
+          const pdfUrl = `/uploads/documents/${fileName}`
+
+          // Prepare student data for variable replacement
+          const studentData: Record<string, any> = {
+            studentName: student.name,
+            rollNo: student.rollNo,
+            regNo: student.regNo || '',
+            fatherName: student.fatherName || '',
+            motherName: student.motherName || '',
+            dob: student.dob ? new Date(student.dob).toLocaleDateString() : '',
+            email: student.email || '',
+            mobile: student.mobile || '',
+            ...(student.customData ? JSON.parse(student.customData) : {}),
+          }
+
+          // Prepare QR code data
+          const qrCodeData = qrHash
+            ? {
+                enabled: true,
+                data: qrHash,
+                position: template.qrPosition ? JSON.parse(template.qrPosition) : undefined,
+              }
+            : undefined
+
+          // Generate PDF based on template type
+          if (template.type === 'HTML') {
+            // Rich text editor - use HTML content
+            let htmlContent = template.htmlContent || '<html><body><p>No content</p></body></html>'
+            
+            // Replace variables in HTML
+            htmlContent = mergeTemplateVariables(htmlContent, studentData)
+            
+            // Wrap in a styled document
+            const styledHtml = `
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <style>
+                    body { 
+                      font-family: Arial, sans-serif; 
+                      padding: 40px; 
+                      max-width: 800px; 
+                      margin: 0 auto;
+                    }
+                    h1, h2, h3 { margin-top: 0.5em; margin-bottom: 0.5em; }
+                    p { margin: 0.5em 0; }
+                    ul, ol { padding-left: 1.5em; }
+                  </style>
+                </head>
+                <body>
+                  ${htmlContent}
+                </body>
+              </html>
+            `
+
+            await generatePDFFromHTML({
+              html: styledHtml,
+              qrCode: qrCodeData,
+              outputPath,
+            })
+          } else if (template.type === 'PDF_MAPPER') {
+            // PDF/JPEG Field Mapper
+            const backgroundPath = path.join(process.cwd(), 'public', template.backgroundUrl || '')
+            const mappingConfig = template.mappingConfig ? JSON.parse(template.mappingConfig) : { fields: [] }
+
+            await generatePDFFromMapper({
+              backgroundPath,
+              fields: mappingConfig.fields || [],
+              data: studentData,
+              outputPath,
+              qrCode: qrCodeData,
+            })
+          } else if (template.htmlConfig) {
+            // Legacy Fabric.js canvas - use htmlConfig
+            const canvasJSON = JSON.parse(template.htmlConfig)
+            await generatePDFFromCanvas(canvasJSON, outputPath, studentData, qrCodeData)
+          }
+
+          // Update document with PDF URL
+          await prisma.document.update({
+            where: { id: document.id },
+            data: { pdfUrl },
+          })
+        } catch (pdfError) {
+          console.error('PDF generation error for student', student.rollNo, ':', pdfError)
+          // Continue with other students even if one fails
+        }
 
         results.success++
         results.documents.push({

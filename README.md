@@ -55,9 +55,11 @@ A comprehensive Multi-University Certificate & Marksheet Management Platform bui
 - **Tailwind CSS**: Utility-first CSS framework
 
 ### Libraries & Tools
+- **TipTap**: Modern rich text editor (ProseMirror-based)
+- **Puppeteer**: HTML to PDF conversion (headless Chrome)
 - **pdf-lib**: PDF generation and manipulation
 - **qrcode**: QR code generation for document verification
-- **fabric**: Canvas-based template editor
+- **fabric**: Legacy canvas-based template editor (backward compatibility)
 - **bcryptjs**: Secure password hashing
 - **jsonwebtoken**: JWT authentication
 - **Radix UI**: Accessible UI components
@@ -441,25 +443,31 @@ GET /api/verify/abc123def456
 
 ### Template Types
 
-#### 1. HTML Template Builder
-- **Visual drag-and-drop editor** using Fabric.js
-- **Full object manipulation**: drag, resize, rotate all elements
-- **Custom HTML/CSS support**
-- **Dynamic field mapping** with variable replacement
-- **Live preview capability**
-- **Export to PDF** with pdf-lib
-- **Elements supported**:
-  - Text (editable with fonts, colors, sizes)
-  - Rectangles and circles
-  - Lines
-  - Images (upload and position)
-  - QR code placeholders
-- **Advanced features**:
-  - Undo/redo functionality
-  - Layers panel
-  - Object alignment tools
-  - Zoom and grid controls
-  - Dark mode support
+#### 1. Rich Text Template Builder (NEW v2.0!)
+- **Modern rich text editor** using TipTap (ProseMirror-based)
+- **Word-processor interface**: familiar formatting experience
+- **Dynamic variables**: Easy insertion of {{studentName}}, {{rollNo}}, etc.
+- **Rich formatting**: Bold, italic, underline, colors, headings
+- **Content types**: Paragraphs, lists, images, tables
+- **Live preview**: Toggle between edit and preview modes
+- **PDF export**: High-quality PDF generation with Puppeteer
+- **Formatting features**:
+  - Multiple heading levels (H1-H6)
+  - Text alignment (left, center, right, justify)
+  - Bullet and numbered lists
+  - Color picker for text
+  - Image insertion via URL
+  - Undo/redo support
+- **Student data integration**:
+  - Automatic variable replacement
+  - Support for all student fields
+  - Custom data field support
+
+**Legacy Fabric.js Canvas Editor** (backward compatible):
+- Still supported for existing templates
+- Full object manipulation with drag, resize, rotate
+- Canvas-based drawing with shapes and images
+- Maintained for backward compatibility only
 
 #### 2. PDF/JPEG Field Mapper
 - **Upload existing certificate design** (PDF or JPEG)
@@ -607,23 +615,27 @@ For support, please open an issue in the GitHub repository or contact the mainta
 - ✅ Next.js 14 with App Router
 
 ### Template System (100% Complete)
-- ✅ HTML Template Builder with Fabric.js
+- ✅ **Rich Text Template Builder with TipTap** (NEW v2.0!)
 - ✅ PDF/JPEG Field Mapper
 - ✅ Direct Upload Mode
 - ✅ Template management UI
 - ✅ QR code integration (toggle on/off)
-- ✅ **NEW**: Full drag, drop, resize, rotate functionality in HTML builder
-- ✅ **NEW**: Enhanced PDF generation with pdf-lib
-- ✅ **NEW**: Comprehensive field mapping with validation
+- ✅ Dynamic variable placeholders ({{studentName}}, {{rollNo}}, etc.)
+- ✅ Full PDF generation with Puppeteer
+- ✅ Comprehensive field mapping with validation
+- ✅ Live preview mode for templates
+- ✅ Backward compatible with legacy Fabric.js templates
 
 ### Student & Document Management (100% Complete)
 - ✅ Student registration and management
 - ✅ Bulk CSV import
 - ✅ Advanced CSV Creator with dynamic fields
 - ✅ Document generation and publishing
+- ✅ **Automatic PDF generation** for single students
+- ✅ **Bulk PDF generation** for CSV uploads
 - ✅ Search and verification portal
 - ✅ QR-based document verification
-- ✅ **NEW**: PDF generation for all template types
+- ✅ Variable replacement in templates
 
 ### Customization (100% Complete)
 - ✅ Branding panel (colors, logos, images)
@@ -639,9 +651,50 @@ For support, please open an issue in the GitHub repository or contact the mainta
 - ✅ Student management interface
 - ✅ Settings and configuration panels
 
-## Recent Updates (November 2025)
+## Recent Updates (November 2024)
 
-### Canvas Rendering and Builder Enhancements
+### Rich Text Editor v2.0 - Major Update! 🎉
+
+**The HTML Template Builder has been completely redesigned!** We've replaced the canvas-based editor with a modern rich text editor for a better user experience.
+
+✅ **New TipTap Rich Text Editor**
+- Modern word-processor-like interface
+- Intuitive formatting toolbar (bold, italic, underline, colors)
+- Multiple heading levels and text alignment
+- Lists, images, and rich content support
+- Live preview mode
+
+✅ **Dynamic Variables System**
+- Easy insertion of student data placeholders
+- Variables like {{studentName}}, {{rollNo}}, {{email}}
+- Automatic replacement during PDF generation
+- Visual variable panel in editor
+
+✅ **Enhanced PDF Generation**
+- Automatic PDF creation using Puppeteer
+- High-quality A4 format documents
+- QR code integration
+- Support for images and styling
+- Works with single and bulk generation
+
+✅ **Improved User Experience**
+- Three-panel layout: toolbar, editor, variables
+- Undo/redo functionality
+- Real-time preview
+- Better error handling
+- Mobile-responsive design
+
+✅ **Backward Compatibility**
+- Legacy Fabric.js templates still work
+- No migration required
+- Automatic template type detection
+- All existing features maintained
+
+For detailed guide, see [RICH_TEXT_EDITOR_GUIDE.md](./RICH_TEXT_EDITOR_GUIDE.md)
+
+### Previous Updates
+
+#### Canvas Rendering and Builder Enhancements
 **All builder issues have been resolved!** The template builders now work flawlessly:
 
 ✅ **Fixed**: Canvas rendering issues in HTML builder
