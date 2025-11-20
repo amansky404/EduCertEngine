@@ -141,6 +141,12 @@ export default function AdminDashboard() {
               Students
             </Link>
             <Link
+              href="/admin/documents"
+              className="py-4 text-gray-600 hover:text-gray-900"
+            >
+              Documents
+            </Link>
+            <Link
               href="/admin/seo"
               className="py-4 text-gray-600 hover:text-gray-900"
             >
@@ -219,9 +225,9 @@ export default function AdminDashboard() {
                   Import Students
                 </Button>
               </Link>
-              <Link href="/admin/csv-creator">
+              <Link href="/admin/documents">
                 <Button className="w-full" variant="outline">
-                  CSV Creator
+                  Generate Documents
                 </Button>
               </Link>
               <Link href="/admin/branding">
