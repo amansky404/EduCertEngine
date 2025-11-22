@@ -1,0 +1,125 @@
+{
+  "summary": {
+    "totalTests": 15,
+    "passed": 4,
+    "failed": 10,
+    "skipped": 1,
+    "successRate": 26.67,
+    "duration": 22.73,
+    "timestamp": "2025-11-21T16:31:51.294Z"
+  },
+  "results": [
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.1",
+      "status": "PASS",
+      "message": "Super Admin registered successfully",
+      "timestamp": "2025-11-21T16:31:29.341Z"
+    },
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.2",
+      "status": "PASS",
+      "message": "Using registration token",
+      "timestamp": "2025-11-21T16:31:30.494Z"
+    },
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.3",
+      "status": "FAIL",
+      "message": "Missing required fields",
+      "timestamp": "2025-11-21T16:31:31.639Z"
+    },
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.4",
+      "status": "PASS",
+      "message": "Retrieved 3 university/universities",
+      "timestamp": "2025-11-21T16:31:32.768Z"
+    },
+    {
+      "phase": "Phase 2",
+      "test": "Test 2.1",
+      "status": "FAIL",
+      "message": "Invalid credentials",
+      "timestamp": "2025-11-21T16:31:34.896Z"
+    },
+    {
+      "phase": "Phase 3",
+      "test": "Test 3.1",
+      "status": "FAIL",
+      "message": "Unauthorized",
+      "timestamp": "2025-11-21T16:31:37.028Z"
+    },
+    {
+      "phase": "Phase 3",
+      "test": "Test 3.2",
+      "status": "FAIL",
+      "message": "Unauthorized",
+      "timestamp": "2025-11-21T16:31:38.165Z"
+    },
+    {
+      "phase": "Phase 4",
+      "test": "Test 4.1",
+      "status": "FAIL",
+      "message": "Unauthorized",
+      "timestamp": "2025-11-21T16:31:40.288Z"
+    },
+    {
+      "phase": "Phase 4",
+      "test": "Test 4.2",
+      "status": "FAIL",
+      "message": "Unauthorized",
+      "timestamp": "2025-11-21T16:31:41.417Z"
+    },
+    {
+      "phase": "Phase 4",
+      "test": "Test 4.3",
+      "status": "FAIL",
+      "message": "Unauthorized",
+      "timestamp": "2025-11-21T16:31:42.548Z"
+    },
+    {
+      "phase": "Phase 4",
+      "test": "Test 4.4",
+      "status": "FAIL",
+      "message": "Missing required parameters",
+      "timestamp": "2025-11-21T16:31:43.691Z"
+    },
+    {
+      "phase": "Phase 5",
+      "test": "Test 5.1",
+      "status": "FAIL",
+      "message": "Unauthorized",
+      "timestamp": "2025-11-21T16:31:47.016Z"
+    },
+    {
+      "phase": "Phase 5",
+      "test": "Test 5.2",
+      "status": "FAIL",
+      "message": "Unauthorized",
+      "timestamp": "2025-11-21T16:31:48.201Z"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.1",
+      "status": "PASS",
+      "message": "Landing page accessible",
+      "timestamp": "2025-11-21T16:31:50.292Z"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.2",
+      "status": "SKIP",
+      "message": "No document ID available",
+      "timestamp": "2025-11-21T16:31:51.293Z"
+    }
+  ],
+  "ids": {
+    "superAdminToken": "Generated",
+    "universityId": "",
+    "templateId": "",
+    "studentId": "",
+    "documentId": ""
+  }
+}

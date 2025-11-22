@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { FileText, Download, Eye, CheckCircle } from "lucide-react"
+import { FileText, Download, Eye, CheckCircle, Search, Award, GraduationCap, Sparkles } from "lucide-react"
 
 export default function StudentSearchPage() {
   const [searchType, setSearchType] = useState<"roll" | "reg" | "mobile" | "dob">("roll")
@@ -60,131 +60,148 @@ export default function StudentSearchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+        <div className="absolute top-40 right-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-1/2 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
+
       {/* Header */}
-      <header className="bg-white border-b shadow-sm">
+      <header className="relative bg-white/80 backdrop-blur-lg border-b shadow-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Student Document Portal</h1>
-              <p className="text-gray-600 mt-2">
-                Search, view, and download your academic documents
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg">
+                <GraduationCap className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Student Document Portal
+                </h1>
+                <p className="text-gray-600 mt-1 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-yellow-500" />
+                  Search, view, and download your academic documents
+                </p>
+              </div>
             </div>
             <Link href="/">
-              <Button variant="outline">Back to Home</Button>
+              <Button variant="outline" className="hover:bg-blue-50 transition-colors">
+                Back to Home
+              </Button>
             </Link>
           </div>
         </div>
       </header>
 
       {/* Search Section */}
-      <main className="container mx-auto px-4 py-12">
-        <div className="max-w-3xl mx-auto">
+      <main className="relative container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto">
           {/* Search Card */}
-          <Card className="shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-6 w-6 text-blue-600" />
+          <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <Search className="h-6 w-6" />
+                </div>
                 Search Your Documents
               </CardTitle>
-              <CardDescription>
-                Enter your details to find and access your academic documents
+              <CardDescription className="text-blue-100">
+                Enter your details to find and access your academic documents instantly
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-              <form onSubmit={handleSearch} className="space-y-6">
+            <CardContent className="pt-8">
+              <form onSubmit={handleSearch} className="space-y-8">
                 {/* Search Type Selection */}
-                <div className="space-y-3">
-                  <Label className="text-base font-semibold">Search By</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSearchType("roll")}
-                      className={`px-4 py-3 rounded-lg border-2 font-medium transition-all ${
-                        searchType === "roll"
-                          ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                          : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
-                      }`}
-                    >
-                      Roll Number
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSearchType("reg")}
-                      className={`px-4 py-3 rounded-lg border-2 font-medium transition-all ${
-                        searchType === "reg"
-                          ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                          : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
-                      }`}
-                    >
-                      Reg Number
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSearchType("mobile")}
-                      className={`px-4 py-3 rounded-lg border-2 font-medium transition-all ${
-                        searchType === "mobile"
-                          ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                          : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
-                      }`}
-                    >
-                      Mobile
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSearchType("dob")}
-                      className={`px-4 py-3 rounded-lg border-2 font-medium transition-all ${
-                        searchType === "dob"
-                          ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                          : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
-                      }`}
-                    >
-                      Date of Birth
-                    </button>
+                <div className="space-y-4">
+                  <Label className="text-lg font-semibold flex items-center gap-2">
+                    <Award className="h-5 w-5 text-blue-600" />
+                    Search By
+                  </Label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { value: "roll", label: "Roll Number", icon: "📋" },
+                      { value: "reg", label: "Reg Number", icon: "🎓" },
+                      { value: "mobile", label: "Mobile", icon: "📱" },
+                      { value: "dob", label: "Date of Birth", icon: "📅" }
+                    ].map((type) => (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() => setSearchType(type.value as any)}
+                        className={`group relative px-5 py-4 rounded-xl border-2 font-medium transition-all duration-300 ${
+                          searchType === type.value
+                            ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white border-blue-600 shadow-lg scale-105"
+                            : "bg-white text-gray-700 border-gray-200 hover:border-blue-400 hover:shadow-md"
+                        }`}
+                      >
+                        <span className="text-2xl mb-1 block">{type.icon}</span>
+                        <span className="text-sm">{type.label}</span>
+                        {searchType === type.value && (
+                          <div className="absolute inset-0 rounded-xl bg-white/20 animate-pulse"></div>
+                        )}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
                 {/* Search Input */}
-                <div className="space-y-2">
-                  <Label htmlFor="searchValue" className="text-base font-semibold">
+                <div className="space-y-3">
+                  <Label htmlFor="searchValue" className="text-lg font-semibold flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
                     {searchType === "roll" && "Roll Number"}
                     {searchType === "reg" && "Registration Number"}
                     {searchType === "mobile" && "Mobile Number"}
                     {searchType === "dob" && "Date of Birth"}
                   </Label>
-                  <Input
-                    id="searchValue"
-                    type={searchType === "dob" ? "date" : "text"}
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                    placeholder={
-                      searchType === "roll"
-                        ? "Enter your roll number"
-                        : searchType === "reg"
-                        ? "Enter your registration number"
-                        : searchType === "mobile"
-                        ? "Enter your mobile number"
-                        : "Select your date of birth"
-                    }
-                    className="h-12 text-base"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="searchValue"
+                      type={searchType === "dob" ? "date" : "text"}
+                      value={searchValue}
+                      onChange={(e) => setSearchValue(e.target.value)}
+                      placeholder={
+                        searchType === "roll"
+                          ? "Enter your roll number (e.g., 2024001)"
+                          : searchType === "reg"
+                          ? "Enter your registration number"
+                          : searchType === "mobile"
+                          ? "Enter your mobile number"
+                          : "Select your date of birth"
+                      }
+                      className="h-14 text-lg pl-12 border-2 focus:border-blue-500 transition-all"
+                      required
+                    />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  </div>
                 </div>
 
                 {error && (
-                  <div className="text-sm text-red-600 bg-red-50 border border-red-200 p-4 rounded-lg">
-                    <p className="font-semibold">Error</p>
-                    <p>{error}</p>
+                  <div className="relative text-sm text-red-600 bg-red-50 border-2 border-red-200 p-4 rounded-xl animate-shake">
+                    <p className="font-semibold flex items-center gap-2">
+                      ⚠️ Error
+                    </p>
+                    <p className="mt-1">{error}</p>
                   </div>
                 )}
 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 text-base font-semibold" 
+                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300" 
                   disabled={loading}
                 >
-                  {loading ? "Searching..." : "Search Documents"}
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Searching...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Search className="h-5 w-5" />
+                      Search Documents
+                    </span>
+                  )}
                 </Button>
               </form>
             </CardContent>

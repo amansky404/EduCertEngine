@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const admin = await prisma.universityAdmin.findUnique({
       where: { email },
       include: {
-        university: {
+        University: {
           select: {
             id: true,
             name: true,
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    if (!admin || !admin.university.isActive) {
+    if (!admin || !admin.University.isActive) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         name: admin.name,
         role: admin.role,
         universityId: admin.universityId,
-        university: admin.university,
+        university: admin.University,
       },
     })
   } catch (error) {

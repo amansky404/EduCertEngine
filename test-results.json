@@ -1,0 +1,264 @@
+{
+  "summary": {
+    "totalTests": 42,
+    "passed": 0,
+    "failed": 42,
+    "successRate": "0.00",
+    "duration": "47.23",
+    "timestamp": "2025-11-21T16:26:45.663Z"
+  },
+  "results": [
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.1",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.2",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.3",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.4",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.5",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.6",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.7",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 1",
+      "test": "Test 1.8",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 2",
+      "test": "Test 2.1",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 2",
+      "test": "Test 2.2",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 2",
+      "test": "Test 2.3",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 3",
+      "test": "Test 3.1",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 3",
+      "test": "Test 3.2",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 3",
+      "test": "Test 3.3",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 3",
+      "test": "Test 3.4",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 3",
+      "test": "Test 3.5",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 3",
+      "test": "Test 3.6",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 4",
+      "test": "Test 4.1",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 4",
+      "test": "Test 4.2",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 4",
+      "test": "Test 4.3",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 4",
+      "test": "Test 4.4",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 4",
+      "test": "Test 4.5",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 4",
+      "test": "Test 4.6",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 4",
+      "test": "Test 4.7",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 5",
+      "test": "Test 5.1",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 5",
+      "test": "Test 5.2",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 5",
+      "test": "Test 5.3",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 5",
+      "test": "Test 5.4",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 5",
+      "test": "Test 5.5",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 5",
+      "test": "Test 5.6",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 5",
+      "test": "Test 5.7",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 5",
+      "test": "Test 5.8",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.1",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.2",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.3",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.4",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.5",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.6",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.7",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.8",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.9",
+      "status": "FAIL",
+      "message": "Error"
+    },
+    {
+      "phase": "Phase 6",
+      "test": "Test 6.10",
+      "status": "FAIL",
+      "message": "Error"
+    }
+  ]
+}

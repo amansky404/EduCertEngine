@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
 
     const student = await prisma.student.create({
       data: {
+        id: `stu_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         universityId: payload.universityId,
         rollNo,
         regNo: regNo || null,
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
         dob: dob ? new Date(dob) : null,
         email: email || null,
         mobile: mobile || null,
+        updatedAt: new Date(),
       },
     })
 

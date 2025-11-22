@@ -21,21 +21,21 @@ export async function GET(
         qrHash: hash,
       },
       include: {
-        student: {
+        Student: {
           select: {
             name: true,
             rollNo: true,
             regNo: true,
           },
         },
-        university: {
+        University: {
           select: {
             name: true,
             subdomain: true,
             logo: true,
           },
         },
-        template: {
+        Template: {
           select: {
             name: true,
             type: true,
@@ -64,9 +64,9 @@ export async function GET(
       id: document.id,
       title: document.title,
       publishedAt: document.publishedAt,
-      student: document.student,
-      university: document.university,
-      template: document.template,
+      student: document.Student,
+      university: document.University,
+      template: document.Template,
       metadata: document.metadata,
     })
   } catch (error) {

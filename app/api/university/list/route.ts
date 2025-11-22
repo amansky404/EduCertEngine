@@ -22,10 +22,10 @@ export async function GET(request: NextRequest) {
         include: {
           _count: {
             select: {
-              admins: true,
-              students: true,
-              templates: true,
-              documents: true,
+              UniversityAdmin: true,
+              Student: true,
+              Template: true,
+              Document: true,
             },
           },
         },
@@ -41,10 +41,10 @@ export async function GET(request: NextRequest) {
         include: {
           _count: {
             select: {
-              admins: true,
-              students: true,
-              templates: true,
-              documents: true,
+              UniversityAdmin: true,
+              Student: true,
+              Template: true,
+              Document: true,
             },
           },
         },

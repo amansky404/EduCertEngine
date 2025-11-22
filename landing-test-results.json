@@ -1,0 +1,36 @@
+{
+  "passed": 5,
+  "failed": 0,
+  "tests": [
+    {
+      "name": "Login",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Landing Page Builder Loads",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Student Search Page Loads",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Search Functionality",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Result Page Loads",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    }
+  ]
+}

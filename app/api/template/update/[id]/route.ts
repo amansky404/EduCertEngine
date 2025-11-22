@@ -13,7 +13,7 @@ export async function PUT(
     }
 
     const decoded = verifyToken(token)
-    if (!decoded || decoded.role !== "admin") {
+    if (!decoded || (decoded.role !== "admin" && decoded.role !== "super_admin")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -29,7 +29,8 @@ export async function PUT(
       return NextResponse.json({ error: "Template not found" }, { status: 404 })
     }
 
-    if (template.universityId !== decoded.universityId) {
+    // Check if user has access to this template's university (skip for super_admin)
+    if (decoded.role !== "super_admin" && template.universityId !== decoded.universityId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -37,10 +38,30 @@ export async function PUT(
     const updateData: any = {}
     
     if (body.htmlConfig !== undefined) {
+      // Validate JSON if it's a string
+      if (typeof body.htmlConfig === 'string') {
+        try {
+          JSON.parse(body.htmlConfig)
+        } catch (e) {
+          return NextResponse.json({ error: 'Invalid htmlConfig JSON' }, { status: 400 })
+        }
+      }
       updateData.htmlConfig = body.htmlConfig
     }
     
+    if (body.htmlContent !== undefined) {
+      updateData.htmlContent = body.htmlContent
+    }
+    
     if (body.mappingConfig !== undefined) {
+      // Validate JSON if it's a string
+      if (typeof body.mappingConfig === 'string') {
+        try {
+          JSON.parse(body.mappingConfig)
+        } catch (e) {
+          return NextResponse.json({ error: 'Invalid mappingConfig JSON' }, { status: 400 })
+        }
+      }
       updateData.mappingConfig = body.mappingConfig
     }
     
@@ -54,6 +75,26 @@ export async function PUT(
     
     if (body.zipUrl !== undefined) {
       updateData.zipUrl = body.zipUrl
+    }
+    
+    if (body.qrEnabled !== undefined) {
+      updateData.qrEnabled = body.qrEnabled
+    }
+    
+    if (body.qrPosition !== undefined) {
+      updateData.qrPosition = body.qrPosition
+    }
+    
+    if (body.name !== undefined) {
+      updateData.name = body.name
+    }
+    
+    if (body.description !== undefined) {
+      updateData.description = body.description
+    }
+    
+    if (body.isActive !== undefined) {
+      updateData.isActive = body.isActive
     }
 
     const updatedTemplate = await prisma.template.update({

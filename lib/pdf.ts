@@ -31,6 +31,18 @@ export interface FieldMapping {
   fontFamily: string
   color: string
   type: "text" | "image" | "qr" | "date" | "number" | "checkbox" | "dropdown"
+  defaultValue?: any
+  validation?: {
+    required?: boolean
+    minLength?: number
+    maxLength?: number
+    pattern?: string
+  }
+  conditional?: {
+    showIf?: string
+    hideIf?: string
+  }
+  options?: string[]
 }
 
 export interface PDFMapperOptions {
@@ -185,10 +197,15 @@ export async function generatePDFFromMapper(options: PDFMapperOptions): Promise<
       fs.mkdirSync(outputDir, { recursive: true })
     }
 
+    // Validate background path
+    if (!backgroundPath || !fs.existsSync(backgroundPath)) {
+      throw new Error(`Background file not found: ${backgroundPath}`)
+    }
+
     // Create a new PDF document or load existing background
     let pdfDoc: PDFDocument
     
-    if (backgroundPath.endsWith('.pdf')) {
+    if (backgroundPath.toLowerCase().endsWith('.pdf')) {
       // Load existing PDF
       const existingPdfBytes = fs.readFileSync(backgroundPath)
       pdfDoc = await PDFDocument.load(existingPdfBytes)
@@ -201,10 +218,12 @@ export async function generatePDFFromMapper(options: PDFMapperOptions): Promise<
       const imageBytes = fs.readFileSync(backgroundPath)
       let image
       
-      if (backgroundPath.endsWith('.png')) {
+      if (backgroundPath.toLowerCase().endsWith('.png')) {
         image = await pdfDoc.embedPng(imageBytes)
-      } else if (backgroundPath.endsWith('.jpg') || backgroundPath.endsWith('.jpeg')) {
+      } else if (backgroundPath.toLowerCase().endsWith('.jpg') || backgroundPath.toLowerCase().endsWith('.jpeg')) {
         image = await pdfDoc.embedJpg(imageBytes)
+      } else {
+        throw new Error(`Unsupported image format: ${backgroundPath}`)
       }
       
       if (image) {
@@ -241,17 +260,22 @@ export async function generatePDFFromMapper(options: PDFMapperOptions): Promise<
 
     // Add fields to PDF
     for (const field of fields) {
-      const value = data[field.name] || ''
+      const value = data[field.name] || field.defaultValue || ''
       
       if (field.type === 'text' || field.type === 'number' || field.type === 'date') {
+        if (!value) continue // Skip empty fields
+        
         // Convert color hex to RGB
-        const color = hexToRgb(field.color)
+        const color = hexToRgb(field.color || '#000000')
         const selectedFont = getFieldFont(field.fontFamily)
         
-        firstPage.drawText(String(value), {
-          x: field.x,
-          y: height - field.y - field.fontSize, // Flip Y coordinate
-          size: field.fontSize,
+        const textValue = String(value)
+        const fontSize = field.fontSize || 12
+        
+        firstPage.drawText(textValue, {
+          x: field.x || 0,
+          y: height - (field.y || 0) - fontSize, // Flip Y coordinate
+          size: fontSize,
           font: selectedFont,
           color: rgb(color.r / 255, color.g / 255, color.b / 255),
         })
@@ -380,22 +404,26 @@ export async function generatePDFFromCanvas(
     }
 
     // Process canvas objects
-    if (canvasJSON.objects) {
+    if (canvasJSON.objects && Array.isArray(canvasJSON.objects)) {
       for (const obj of canvasJSON.objects) {
-        if (obj.type === 'text' || obj.type === 'i-text') {
-          let text = obj.text || ''
-          
-          // Replace variables with data
-          text = mergeTemplateVariables(text, data)
-          
-          const color = hexToRgb(obj.fill || '#000000')
-          const fontSize = obj.fontSize || 12
-          const scaleX = obj.scaleX || 1
-          const scaleY = obj.scaleY || 1
-          const selectedFont = getFont(obj.fontFamily, obj.fontWeight)
-          
-          page.drawText(text, {
-            x: obj.left || 0,
+        try {
+          if (obj.type === 'text' || obj.type === 'i-text' || obj.type === 'textbox') {
+            let text = obj.text || ''
+            
+            // Replace variables with data
+            text = mergeTemplateVariables(text, data)
+            
+            // Skip empty text
+            if (!text || text.trim().length === 0) continue
+            
+            const color = hexToRgb(obj.fill || '#000000')
+            const fontSize = Math.max(1, obj.fontSize || 12) // Ensure minimum font size
+            const scaleX = obj.scaleX || 1
+            const scaleY = obj.scaleY || 1
+            const selectedFont = getFont(obj.fontFamily, obj.fontWeight)
+            
+            page.drawText(text, {
+              x: Math.max(0, obj.left || 0),
             y: height - (obj.top || 0) - (fontSize * scaleY),
             size: fontSize * scaleY,
             font: selectedFont,
@@ -494,35 +522,44 @@ export async function generatePDFFromCanvas(
             const groupTop = obj.top || 0
             
             for (const groupObj of obj.objects) {
-              if (groupObj.type === 'rect') {
-                const fillColor = hexToRgb(groupObj.fill || '#ffffff')
-                const strokeColor = hexToRgb(groupObj.stroke || '#000000')
-                
-                page.drawRectangle({
-                  x: groupLeft + (groupObj.left || 0),
-                  y: height - (groupTop + (groupObj.top || 0)) - (groupObj.height || 0),
-                  width: groupObj.width || 0,
-                  height: groupObj.height || 0,
-                  color: rgb(fillColor.r / 255, fillColor.g / 255, fillColor.b / 255),
-                  borderColor: rgb(strokeColor.r / 255, strokeColor.g / 255, strokeColor.b / 255),
-                  borderWidth: groupObj.strokeWidth || 0,
-                })
-              } else if (groupObj.type === 'text') {
-                const text = groupObj.text || ''
-                const color = hexToRgb(groupObj.fill || '#000000')
-                const fontSize = groupObj.fontSize || 12
-                const selectedFont = getFont(groupObj.fontFamily, groupObj.fontWeight)
-                
-                page.drawText(text, {
-                  x: groupLeft + (groupObj.left || 0),
-                  y: height - (groupTop + (groupObj.top || 0)) - fontSize,
-                  size: fontSize,
-                  font: selectedFont,
-                  color: rgb(color.r / 255, color.g / 255, color.b / 255),
-                })
+              try {
+                if (groupObj.type === 'rect') {
+                  const fillColor = hexToRgb(groupObj.fill || '#ffffff')
+                  const strokeColor = hexToRgb(groupObj.stroke || '#000000')
+                  
+                  page.drawRectangle({
+                    x: groupLeft + (groupObj.left || 0),
+                    y: height - (groupTop + (groupObj.top || 0)) - (groupObj.height || 0),
+                    width: groupObj.width || 0,
+                    height: groupObj.height || 0,
+                    color: rgb(fillColor.r / 255, fillColor.g / 255, fillColor.b / 255),
+                    borderColor: rgb(strokeColor.r / 255, strokeColor.g / 255, strokeColor.b / 255),
+                    borderWidth: groupObj.strokeWidth || 0,
+                  })
+                } else if (groupObj.type === 'text') {
+                  const text = groupObj.text || ''
+                  if (!text || text.trim().length === 0) continue
+                  
+                  const color = hexToRgb(groupObj.fill || '#000000')
+                  const fontSize = Math.max(1, groupObj.fontSize || 12)
+                  const selectedFont = getFont(groupObj.fontFamily, groupObj.fontWeight)
+                  
+                  page.drawText(text, {
+                    x: groupLeft + (groupObj.left || 0),
+                    y: height - (groupTop + (groupObj.top || 0)) - fontSize,
+                    size: fontSize,
+                    font: selectedFont,
+                    color: rgb(color.r / 255, color.g / 255, color.b / 255),
+                  })
+                }
+              } catch (groupError) {
+                console.error('Error rendering grouped object:', groupError)
               }
             }
           }
+        }
+        } catch (objError) {
+          console.error('Error rendering canvas object:', obj.type, objError)
         }
         // Add more object types as needed
       }
@@ -564,6 +601,17 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
   // Remove # if present
   hex = hex.replace('#', '')
   
+  // Handle short format (e.g., #fff)
+  if (hex.length === 3) {
+    hex = hex.split('').map(c => c + c).join('')
+  }
+  
+  // Ensure valid hex
+  if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
+    console.warn(`Invalid hex color: ${hex}, using black`)
+    return { r: 0, g: 0, b: 0 }
+  }
+  
   // Parse hex values
   const r = parseInt(hex.substring(0, 2), 16)
   const g = parseInt(hex.substring(2, 4), 16)
@@ -578,10 +626,22 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
 export function mergeTemplateVariables(template: string, data: Record<string, any>): string {
   let result = template
   
-  Object.keys(data).forEach((key) => {
-    const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g')
-    result = result.replace(regex, String(data[key] || ''))
-  })
+  // Sort keys by length (longest first) to avoid partial replacements
+  const sortedKeys = Object.keys(data).sort((a, b) => b.length - a.length)
+  
+  for (const key of sortedKeys) {
+    const value = data[key]
+    // Handle null/undefined values
+    const safeValue = value !== null && value !== undefined ? String(value) : ''
+    
+    // Replace {{key}} format
+    const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g')
+    result = result.replace(regex, safeValue)
+    
+    // Also support {key} format for backwards compatibility
+    const regex2 = new RegExp(`\\{${key}\\}`, 'g')
+    result = result.replace(regex2, safeValue)
+  }
   
   return result
 }

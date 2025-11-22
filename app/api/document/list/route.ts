@@ -20,14 +20,14 @@ export async function GET(request: NextRequest) {
         universityId: payload.universityId,
       },
       include: {
-        student: {
+        Student: {
           select: {
             name: true,
             rollNo: true,
             regNo: true,
           },
         },
-        template: {
+        Template: {
           select: {
             name: true,
             type: true,

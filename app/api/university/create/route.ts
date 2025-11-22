@@ -54,23 +54,27 @@ export async function POST(request: NextRequest) {
     // Create university with admin
     const university = await prisma.university.create({
       data: {
+        id: `uni_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name,
         subdomain,
         slug,
         primaryColor: primaryColor || '#3b82f6',
         secondaryColor: secondaryColor || '#1e40af',
         qrEnabled: qrEnabled !== undefined ? qrEnabled : true,
-        admins: {
+        updatedAt: new Date(),
+        UniversityAdmin: {
           create: {
+            id: `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             email: adminEmail,
             password: hashedPassword,
             name: adminName,
             role: 'admin',
+            updatedAt: new Date(),
           },
         },
       },
       include: {
-        admins: {
+        UniversityAdmin: {
           select: {
             id: true,
             email: true,

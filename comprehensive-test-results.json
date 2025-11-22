@@ -1,0 +1,180 @@
+{
+  "passed": 16,
+  "failed": 0,
+  "tests": [
+    {
+      "name": "Login",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Create HTML Template",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Create PDF_MAPPER Template",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Create CANVAS Template",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Add Student: Alice Johnson",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Add Student: Bob Smith",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Add Student: Carol Davis",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Generate: HTML Certificate → Alice Johnson",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Generate: HTML Certificate → Bob Smith",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Generate: HTML Certificate → Carol Davis",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Generate: PDF Mapper Certificate → Alice Johnson",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Generate: PDF Mapper Certificate → Bob Smith",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Generate: PDF Mapper Certificate → Carol Davis",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Generate: Canvas Certificate → Alice Johnson",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Generate: Canvas Certificate → Bob Smith",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "name": "Generate: Canvas Certificate → Carol Davis",
+      "passed": true,
+      "error": null,
+      "screenshot": null
+    }
+  ],
+  "templates": [
+    {
+      "name": "HTML Certificate",
+      "type": "HTML",
+      "desc": "Rich text certificate",
+      "created": true
+    },
+    {
+      "name": "PDF Mapper Certificate",
+      "type": "PDF_MAPPER",
+      "desc": "Background with fields",
+      "created": true
+    },
+    {
+      "name": "Canvas Certificate",
+      "type": "CANVAS",
+      "desc": "Visual canvas design",
+      "created": true
+    }
+  ],
+  "students": [
+    {
+      "name": "Alice Johnson",
+      "rollNo": "COMP001",
+      "email": "alice@test.com",
+      "added": true
+    },
+    {
+      "name": "Bob Smith",
+      "rollNo": "COMP002",
+      "email": "bob@test.com",
+      "added": true
+    },
+    {
+      "name": "Carol Davis",
+      "rollNo": "COMP003",
+      "email": "carol@test.com",
+      "added": true
+    }
+  ],
+  "certificates": [
+    {
+      "template": "HTML Certificate",
+      "student": "Alice Johnson"
+    },
+    {
+      "template": "HTML Certificate",
+      "student": "Bob Smith"
+    },
+    {
+      "template": "HTML Certificate",
+      "student": "Carol Davis"
+    },
+    {
+      "template": "PDF Mapper Certificate",
+      "student": "Alice Johnson"
+    },
+    {
+      "template": "PDF Mapper Certificate",
+      "student": "Bob Smith"
+    },
+    {
+      "template": "PDF Mapper Certificate",
+      "student": "Carol Davis"
+    },
+    {
+      "template": "Canvas Certificate",
+      "student": "Alice Johnson"
+    },
+    {
+      "template": "Canvas Certificate",
+      "student": "Bob Smith"
+    },
+    {
+      "template": "Canvas Certificate",
+      "student": "Carol Davis"
+    }
+  ]
+}

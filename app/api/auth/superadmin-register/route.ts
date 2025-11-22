@@ -31,9 +31,11 @@ export async function POST(request: NextRequest) {
     // Create super admin
     const admin = await prisma.superAdmin.create({
       data: {
+        id: `sa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         email,
         password: hashedPassword,
         name,
+        updatedAt: new Date(),
       },
     })
 

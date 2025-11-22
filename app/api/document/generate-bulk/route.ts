@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
         // Create document record
         const document = await prisma.document.create({
           data: {
+            id: `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             universityId: payload.universityId,
             studentId: student.id,
             templateId: template.id,
@@ -118,6 +119,7 @@ export async function POST(request: NextRequest) {
             qrHash,
             qrUrl,
             isPublished: false,
+            updatedAt: new Date(),
             metadata: JSON.stringify({
               studentName: student.name,
               rollNo: student.rollNo,
@@ -199,7 +201,16 @@ export async function POST(request: NextRequest) {
             })
           } else if (template.type === 'PDF_MAPPER') {
             // PDF/JPEG Field Mapper
-            const backgroundPath = path.join(process.cwd(), 'public', template.backgroundUrl || '')
+            if (!template.backgroundUrl) {
+              throw new Error('Background URL is required for PDF_MAPPER template')
+            }
+            
+            const backgroundPath = path.join(process.cwd(), 'public', template.backgroundUrl)
+            
+            if (!fs.existsSync(backgroundPath)) {
+              throw new Error(`Background file not found: ${backgroundPath}`)
+            }
+            
             const mappingConfig = template.mappingConfig ? JSON.parse(template.mappingConfig) : { fields: [] }
 
             await generatePDFFromMapper({
@@ -209,10 +220,16 @@ export async function POST(request: NextRequest) {
               outputPath,
               qrCode: qrCodeData,
             })
-          } else if (template.htmlConfig) {
+          } else if (template.type === 'CANVAS' || template.htmlConfig) {
             // Legacy Fabric.js canvas - use htmlConfig
+            if (!template.htmlConfig) {
+              throw new Error('Canvas configuration is required for CANVAS template')
+            }
+            
             const canvasJSON = JSON.parse(template.htmlConfig)
             await generatePDFFromCanvas(canvasJSON, outputPath, studentData, qrCodeData)
+          } else {
+            throw new Error(`Unsupported template type: ${template.type}`)
           }
 
           // Update document with PDF URL

@@ -10,12 +10,12 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = verifyToken(token)
-    if (!payload || payload.role !== 'admin' || !payload.universityId) {
+    if (!payload || (payload.role !== 'admin' && payload.role !== 'super_admin')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
-    const { name, type, description, qrEnabled } = body
+    const { name, type, description, qrEnabled, universityId } = body
 
     if (!name || !type) {
       return NextResponse.json(
@@ -24,13 +24,36 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate template type
+    const validTypes = ['HTML', 'PDF_MAPPER', 'CANVAS']
+    if (!validTypes.includes(type)) {
+      return NextResponse.json(
+        { error: `Invalid template type. Must be one of: ${validTypes.join(', ')}` },
+        { status: 400 }
+      )
+    }
+
+    // Super admin must provide universityId, regular admin uses their own
+    const targetUniversityId = payload.role === 'super_admin' 
+      ? universityId 
+      : payload.universityId
+
+    if (!targetUniversityId) {
+      return NextResponse.json(
+        { error: 'University ID is required' },
+        { status: 400 }
+      )
+    }
+
     const template = await prisma.template.create({
       data: {
-        universityId: payload.universityId,
+        id: `tpl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        universityId: targetUniversityId,
         name,
         type,
         description,
         qrEnabled: qrEnabled !== undefined ? qrEnabled : true,
+        updatedAt: new Date(),
       },
     })
 

@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "backend": "node server.js",
@@ -14,6 +14,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push",
+    "vercel-build": "prisma generate && next build",
+    "postinstall": "prisma generate",
+    "deploy:vercel": "./deploy-vercel.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -38,6 +41,7 @@
     "@tiptap/extension-underline": "^3.11.0",
     "@tiptap/react": "^3.11.0",
     "@tiptap/starter-kit": "^3.11.0",
+    "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -56,7 +60,7 @@
     "multer": "^2.0.2",
     "next": "14.2.15",
     "pdf-lib": "^1.17.1",
-    "puppeteer": "^24.30.0",
+    "puppeteer": "^24.31.0",
     "qrcode": "^1.5.4",
     "quill": "^2.0.3",
     "react": "^18.3.1",

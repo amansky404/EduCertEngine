@@ -13,7 +13,7 @@ export async function GET(
     }
 
     const decoded = verifyToken(token)
-    if (!decoded || decoded.role !== "admin") {
+    if (!decoded || (decoded.role !== "admin" && decoded.role !== "super_admin")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -22,7 +22,7 @@ export async function GET(
     const template = await prisma.template.findUnique({
       where: { id: templateId },
       include: {
-        university: true,
+        University: true,
       },
     })
 
@@ -30,8 +30,8 @@ export async function GET(
       return NextResponse.json({ error: "Template not found" }, { status: 404 })
     }
 
-    // Check if user has access to this template's university
-    if (template.universityId !== decoded.universityId) {
+    // Check if user has access to this template's university (skip for super_admin)
+    if (decoded.role !== "super_admin" && template.universityId !== decoded.universityId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

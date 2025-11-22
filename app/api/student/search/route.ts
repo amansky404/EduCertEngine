@@ -33,12 +33,12 @@ export async function GET(request: NextRequest) {
           rollNo: value,
         },
         include: {
-          documents: {
+          Document: {
             where: {
               isPublished: true,
             },
             include: {
-              template: {
+              Template: {
                 select: {
                   name: true,
                   type: true,
@@ -55,12 +55,12 @@ export async function GET(request: NextRequest) {
           regNo: value,
         },
         include: {
-          documents: {
+          Document: {
             where: {
               isPublished: true,
             },
             include: {
-              template: {
+              Template: {
                 select: {
                   name: true,
                   type: true,
@@ -77,12 +77,12 @@ export async function GET(request: NextRequest) {
           mobile: value,
         },
         include: {
-          documents: {
+          Document: {
             where: {
               isPublished: true,
             },
             include: {
-              template: {
+              Template: {
                 select: {
                   name: true,
                   type: true,
@@ -99,12 +99,12 @@ export async function GET(request: NextRequest) {
           dob: new Date(value),
         },
         include: {
-          documents: {
+          Document: {
             where: {
               isPublished: true,
             },
             include: {
-              template: {
+              Template: {
                 select: {
                   name: true,
                   type: true,
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
         regNo: student.regNo,
         email: student.email,
       },
-      documents: student.documents,
+      documents: student.Document,
     })
   } catch (error) {
     console.error('Student search error:', error)

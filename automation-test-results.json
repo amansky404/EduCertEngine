@@ -1,0 +1,54 @@
+{
+  "passed": 8,
+  "failed": 0,
+  "tests": [
+    {
+      "name": "Homepage Loads",
+      "passed": true,
+      "error": null,
+      "screenshot": "/home/kalki/Desktop/Archive/KAchra/EduCertEngine/test-screenshots/1763745420133-homepage.png"
+    },
+    {
+      "name": "Admin Login",
+      "passed": true,
+      "error": null,
+      "screenshot": "/home/kalki/Desktop/Archive/KAchra/EduCertEngine/test-screenshots/1763745432253-after-login.png"
+    },
+    {
+      "name": "Navigate to Templates",
+      "passed": true,
+      "error": null,
+      "screenshot": "/home/kalki/Desktop/Archive/KAchra/EduCertEngine/test-screenshots/1763745437047-Templates-page.png"
+    },
+    {
+      "name": "Create Template",
+      "passed": true,
+      "error": null,
+      "screenshot": "/home/kalki/Desktop/Archive/KAchra/EduCertEngine/test-screenshots/1763745446862-template-created.png"
+    },
+    {
+      "name": "Navigate to Students",
+      "passed": true,
+      "error": null,
+      "screenshot": "/home/kalki/Desktop/Archive/KAchra/EduCertEngine/test-screenshots/1763745450510-Students-page.png"
+    },
+    {
+      "name": "Add Student",
+      "passed": true,
+      "error": null,
+      "screenshot": "/home/kalki/Desktop/Archive/KAchra/EduCertEngine/test-screenshots/1763745463773-student-added.png"
+    },
+    {
+      "name": "Navigate to Documents",
+      "passed": true,
+      "error": null,
+      "screenshot": "/home/kalki/Desktop/Archive/KAchra/EduCertEngine/test-screenshots/1763745468766-Documents-page.png"
+    },
+    {
+      "name": "Generate Certificate",
+      "passed": true,
+      "error": null,
+      "screenshot": "/home/kalki/Desktop/Archive/KAchra/EduCertEngine/test-screenshots/1763745474029-certificate-generated.png"
+    }
+  ]
+}

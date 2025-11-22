@@ -10,21 +10,24 @@ export async function GET(request: NextRequest) {
     }
 
     const payload = verifyToken(token)
-    if (!payload || !payload.universityId) {
+    if (!payload) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Super admin can see all templates, regular admin sees only their university
+    const whereClause = payload.role === 'super_admin' 
+      ? {} 
+      : { universityId: payload.universityId }
+
     const templates = await prisma.template.findMany({
-      where: {
-        universityId: payload.universityId,
-      },
+      where: whereClause,
       orderBy: {
         createdAt: 'desc',
       },
       include: {
         _count: {
           select: {
-            documents: true,
+            Document: true,
           },
         },
       },
